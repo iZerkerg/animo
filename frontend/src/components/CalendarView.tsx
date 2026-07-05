@@ -29,11 +29,18 @@ export function CalendarView({ entries }: Props) {
 
   function dominantEmotion(day: Date) {
     const dayEntries = entries.filter((entry) => isSameDay(new Date(entry.date), day));
-    const counts = new Map<string, { total: number; emoji: string }>();
+    const counts = new Map<string, { total: number; emoji: string; intensity: number }>();
     dayEntries.forEach((entry) => {
-      counts.set(entry.emotion, { total: (counts.get(entry.emotion)?.total ?? 0) + 1, emoji: entry.emoji });
+      getEntryEmotions(entry).forEach((item) => {
+        const current = counts.get(item.emotion);
+        counts.set(item.emotion, {
+          total: (current?.total ?? 0) + 1,
+          emoji: item.emoji,
+          intensity: (current?.intensity ?? 0) + (item.intensity ?? 0)
+        });
+      });
     });
-    return [...counts.entries()].sort((a, b) => b[1].total - a[1].total)[0];
+    return [...counts.entries()].sort((a, b) => b[1].total - a[1].total || b[1].intensity - a[1].intensity)[0];
   }
 
   return (
@@ -76,7 +83,7 @@ export function CalendarView({ entries }: Props) {
           selectedEntries.map((entry) => (
             <article key={entry.id}>
               <strong>
-                {entry.emoji} {entry.emotion}
+                {formatEntryEmotions(entry)}
               </strong>
               <span>{timeOfDayLabels[entry.timeOfDay]}</span>
               <p>{entry.note || uiText.home.noNote}</p>
@@ -86,4 +93,14 @@ export function CalendarView({ entries }: Props) {
       </div>
     </div>
   );
+}
+
+function getEntryEmotions(entry: MoodEntry) {
+  return entry.emotions?.length ? entry.emotions : [{ emotion: entry.emotion, emoji: entry.emoji, intensity: null }];
+}
+
+function formatEntryEmotions(entry: MoodEntry) {
+  return getEntryEmotions(entry)
+    .map((item) => `${item.emoji} ${item.emotion}${item.intensity ? ` ${item.intensity}/5` : ""}`)
+    .join(" · ");
 }

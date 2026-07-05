@@ -17,19 +17,22 @@ const scoreByEmotion: Record<string, number> = {
   Enojada: 1
 };
 
-const colors = ["#f7a8c4", "#9bd6c5", "#f9d46b", "#a7c7e7", "#cdb4db", "#ffb4a2"];
+const colors = ["var(--primary)", "var(--chart-secondary)", "#f9d46b", "#a7c7e7", "#cdb4db", "#ffb4a2"];
 
 export function DashboardCharts({ entries }: Props) {
-  const byEmotion = groupCount(entries, (entry) => entry.emotion);
-  const byTime = groupCount(entries, (entry) => timeOfDayLabels[entry.timeOfDay]);
+  const emotionEvents = entries.flatMap((entry) =>
+    getEntryEmotions(entry).map((emotion) => ({ ...emotion, entry }))
+  );
+  const byEmotion = groupCount(emotionEvents, (item) => item.emotion);
+  const byTime = groupCount(emotionEvents, (item) => timeOfDayLabels[item.entry.timeOfDay]);
   const byCategory = groupCount(
-    entries.flatMap((entry) => entry.categories.map((category) => ({ name: category.name, emotion: entry.emotion }))),
+    emotionEvents.flatMap((item) => item.entry.categories.map((category) => ({ name: category.name, emotion: item.emotion }))),
     (item) => `${item.name} - ${item.emotion}`
   ).slice(0, 8);
   const evolution = entries.slice(-14).map((entry) => ({
     date: new Date(entry.date).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" }),
-    score: scoreByEmotion[entry.emotion] ?? 3,
-    emotion: entry.emotion
+    score: entryScore(entry),
+    emotion: getEntryEmotions(entry).map((item) => item.emotion).join(", ")
   }));
 
   const weeklyAverage = average(entries.slice(-7));
@@ -50,11 +53,11 @@ export function DashboardCharts({ entries }: Props) {
         <h2>{uiText.dashboard.recentEvolution}</h2>
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={evolution} margin={{ top: 8, right: 12, bottom: 8, left: -16 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#eadfe8" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
             <XAxis dataKey="date" tick={{ fontSize: 12 }} />
             <YAxis domain={[1, 5]} tick={{ fontSize: 12 }} />
             <Tooltip />
-            <Line type="monotone" dataKey="score" stroke="#e66f9e" strokeWidth={3} dot={{ r: 5 }} />
+            <Line type="monotone" dataKey="score" stroke="var(--chart-primary)" strokeWidth={3} dot={{ r: 5 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -63,7 +66,7 @@ export function DashboardCharts({ entries }: Props) {
         <h2>{uiText.dashboard.frequentEmotions}</h2>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={byEmotion} margin={{ top: 8, right: 8, bottom: 8, left: -18 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#eadfe8" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
             <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} tickFormatter={shortLabel} />
             <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
             <Tooltip />
@@ -94,11 +97,11 @@ export function DashboardCharts({ entries }: Props) {
         <h2>{uiText.dashboard.emotionsByCategory}</h2>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={byCategory} layout="vertical" margin={{ top: 8, right: 12, bottom: 8, left: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#eadfe8" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
             <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
             <YAxis dataKey="name" type="category" width={118} tick={{ fontSize: 11 }} tickFormatter={shortLabel} />
             <Tooltip />
-            <Bar dataKey="total" fill="#9bd6c5" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="total" fill="var(--chart-secondary)" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -114,9 +117,18 @@ function groupCount<T>(items: T[], key: (item: T) => string) {
 
 function average(entries: MoodEntry[]) {
   if (!entries.length) return 0;
-  return entries.reduce((sum, entry) => sum + (scoreByEmotion[entry.emotion] ?? 3), 0) / entries.length;
+  return entries.reduce((sum, entry) => sum + entryScore(entry), 0) / entries.length;
 }
 
 function shortLabel(value: string) {
   return value.length > 14 ? `${value.slice(0, 13)}…` : value;
+}
+
+function getEntryEmotions(entry: MoodEntry) {
+  return entry.emotions?.length ? entry.emotions : [{ emotion: entry.emotion, emoji: entry.emoji, intensity: null }];
+}
+
+function entryScore(entry: MoodEntry) {
+  const values = getEntryEmotions(entry).map((item) => item.intensity ?? scoreByEmotion[item.emotion] ?? 3);
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
 }

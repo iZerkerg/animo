@@ -30,6 +30,9 @@ export const uiText = {
   },
   moodForm: {
     title: "Registro rápido",
+    selected: "Emociones seleccionadas",
+    intensity: "Intensidad",
+    chooseEmotion: "Elige al menos una emoción.",
     timeOfDay: "Momento",
     date: "Fecha",
     note: "Nota",

@@ -4,15 +4,19 @@ import { CalendarView } from "../components/CalendarView";
 import { DashboardCharts } from "../components/DashboardCharts";
 import { MoodForm } from "../components/MoodForm";
 import { ReminderSettings } from "../components/ReminderSettings";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { uiText } from "../constants/text";
+import type { ThemeMode } from "../hooks/useTheme";
 import { api, clearToken, type Category, type MoodEntry, type User } from "../services/api";
 
 type Props = {
   user: User;
   onLogout: () => void;
+  themeMode: ThemeMode;
+  onThemeChange: (mode: ThemeMode) => void;
 };
 
-export function AppPage({ user, onLogout }: Props) {
+export function AppPage({ user, onLogout, onThemeChange, themeMode }: Props) {
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [summary, setSummary] = useState<string[]>([]);
@@ -63,9 +67,12 @@ export function AppPage({ user, onLogout }: Props) {
             <p>{uiText.home.greeting}, {user.name}</p>
             <h1>{uiText.home.title}</h1>
           </div>
-          <button className="primary-action compact" onClick={() => setActiveView("home")}>
-            {uiText.home.quickMood}
-          </button>
+          <div className="topbar-actions">
+            <ThemeToggle compact mode={themeMode} onChange={onThemeChange} />
+            <button className="primary-action compact" onClick={() => setActiveView("home")}>
+              {uiText.home.quickMood}
+            </button>
+          </div>
         </header>
 
         {activeView === "home" && (
@@ -83,7 +90,7 @@ export function AppPage({ user, onLogout }: Props) {
                   todayEntries.map((entry) => (
                     <article key={entry.id} className="mini-entry">
                       <strong>
-                        {entry.emoji} {entry.emotion}
+                        {formatEntryEmotions(entry)}
                       </strong>
                       <span>{entry.note || uiText.home.noNote}</span>
                     </article>
@@ -108,4 +115,9 @@ export function AppPage({ user, onLogout }: Props) {
       </section>
     </main>
   );
+}
+
+function formatEntryEmotions(entry: MoodEntry) {
+  const emotions = entry.emotions?.length ? entry.emotions : [{ emotion: entry.emotion, emoji: entry.emoji }];
+  return emotions.map((item) => `${item.emoji} ${item.emotion}`).join(" · ");
 }

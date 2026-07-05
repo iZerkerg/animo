@@ -12,10 +12,20 @@ export type Category = {
 
 export type TimeOfDay = "morning" | "afternoon" | "evening";
 
+export type MoodEntryEmotion = {
+  id?: string;
+  moodEntryId?: string;
+  emotion: string;
+  emoji: string;
+  intensity?: number | null;
+  createdAt?: string;
+};
+
 export type MoodEntry = {
   id: string;
   emotion: string;
   emoji: string;
+  emotions: MoodEntryEmotion[];
   note: string;
   timeOfDay: TimeOfDay;
   date: string;
@@ -71,8 +81,7 @@ export const api = {
   categories: () => request<{ categories: Category[] }>("/categories"),
   moods: () => request<{ entries: MoodEntry[] }>("/moods"),
   createMood: (payload: {
-    emotion: string;
-    emoji: string;
+    emotions: Array<{ emotion: string; emoji: string; intensity?: number }>;
     note: string;
     timeOfDay: TimeOfDay;
     date: string;

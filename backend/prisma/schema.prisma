@@ -25,18 +25,32 @@ model User {
 }
 
 model MoodEntry {
-  id        String      @id @default(cuid())
+  id        String              @id @default(cuid())
   userId    String
   emotion   String
   emoji     String
   note      String?
   timeOfDay TimeOfDay
   date      DateTime
-  createdAt DateTime    @default(now())
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  categories Category[] @relation("MoodEntryCategories")
+  createdAt DateTime            @default(now())
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories Category[]         @relation("MoodEntryCategories")
+  emotions  MoodEntryEmotion[]
 
   @@index([userId, date])
+}
+
+model MoodEntryEmotion {
+  id          String    @id @default(cuid())
+  moodEntryId String
+  emotion     String
+  emoji        String
+  intensity   Int?
+  createdAt   DateTime  @default(now())
+  moodEntry   MoodEntry @relation(fields: [moodEntryId], references: [id], onDelete: Cascade)
+
+  @@index([moodEntryId])
+  @@unique([moodEntryId, emotion])
 }
 
 model Category {
