@@ -106,7 +106,7 @@ authRouter.post("/reset-password", async (req, res) => {
 authRouter.get("/me", requireAuth, async (req: AuthRequest, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user!.id },
-    select: { id: true, name: true, email: true, createdAt: true }
+    select: { id: true, name: true, email: true, profileImageUrl: true, birthDate: true, createdAt: true, updatedAt: true }
   });
 
   if (!user) return res.status(404).json({ message: "Usuario no encontrado" });

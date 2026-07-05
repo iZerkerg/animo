@@ -6,6 +6,7 @@ import { authRouter } from "./routes/auth.routes.js";
 import { categoryRouter } from "./routes/category.routes.js";
 import { moodRouter } from "./routes/mood.routes.js";
 import { reminderRouter } from "./routes/reminder.routes.js";
+import { userRouter } from "./routes/user.routes.js";
 
 export const app = express();
 
@@ -18,3 +19,4 @@ app.use("/api/auth", authRouter);
 app.use("/api/categories", categoryRouter);
 app.use("/api/moods", moodRouter);
 app.use("/api/reminders", reminderRouter);
+app.use("/api/users", userRouter);

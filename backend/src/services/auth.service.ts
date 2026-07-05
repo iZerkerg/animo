@@ -23,7 +23,7 @@ export async function registerUser(name: string, email: string, password: string
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
     data: { name, email, passwordHash },
-    select: { id: true, name: true, email: true, createdAt: true }
+    select: { id: true, name: true, email: true, profileImageUrl: true, birthDate: true, createdAt: true, updatedAt: true }
   });
 
   return { user, token: createToken(user) };
@@ -41,7 +41,15 @@ export async function loginUser(email: string, password: string) {
   }
 
   return {
-    user: { id: user.id, name: user.name, email: user.email, createdAt: user.createdAt },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      profileImageUrl: user.profileImageUrl,
+      birthDate: user.birthDate,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    },
     token: createToken(user)
   };
 }

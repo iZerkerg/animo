@@ -97,6 +97,7 @@ El flujo usa `POST /api/auth/forgot-password` y `POST /api/auth/reset-password`.
 ## Funcionalidades incluidas
 
 - Registro, login, persistencia de sesión con JWT y logout.
+- Perfil de usuario con nombre, fecha de nacimiento, URL de foto y avatar por defecto.
 - Cada usuario ve solo sus propios registros.
 - Registro de ánimo por mañana, tarde y noche.
 - Emociones con emoji, nota y categorías.
@@ -104,6 +105,7 @@ El flujo usa `POST /api/auth/forgot-password` y `POST /api/auth/reset-password`.
 - Dashboard con evolución, emociones frecuentes, promedio semanal/mensual, categorías y distribución por momento del día.
 - Resumen automático de tendencias semanales.
 - Configuración de recordatorios por correo con servicio modular en `backend/src/services/email.service.ts`.
+- Saludo especial de cumpleaños cuando coincide día y mes de la fecha guardada en el perfil.
 
 ## Siguientes mejoras sugeridas
 

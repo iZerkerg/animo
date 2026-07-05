@@ -6,6 +6,7 @@ export const uiText = {
     diary: "Diario",
     calendar: "Calendario",
     charts: "Gráficos",
+    profile: "Perfil",
     logout: "Salir"
   },
   auth: {
@@ -42,7 +43,21 @@ export const uiText = {
     todaySummary: "Resumen de hoy",
     noEntriesToday: "Hoy todavía no registras tu ánimo.",
     noNote: "Sin nota",
-    trends: "Tendencias"
+    trends: "Tendencias",
+    birthday: "¡Feliz cumpleaños, {name}! 🎂 Que tengas un día bonito."
+  },
+  profile: {
+    title: "Tu perfil",
+    subtitle: "Actualiza tus datos personales básicos.",
+    avatarAlt: "Foto de perfil",
+    imageUrl: "URL de foto de perfil",
+    imagePlaceholder: "https://...",
+    birthDate: "Fecha de nacimiento",
+    createdAt: "Cuenta creada",
+    save: "Guardar cambios",
+    saving: "Guardando cambios...",
+    saved: "Perfil actualizado.",
+    logout: "Cerrar sesión"
   },
   moodForm: {
     title: "Registro rápido",

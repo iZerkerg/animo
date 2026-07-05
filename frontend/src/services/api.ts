@@ -2,7 +2,10 @@ export type User = {
   id: string;
   name: string;
   email: string;
+  profileImageUrl?: string | null;
+  birthDate?: string | null;
   createdAt: string;
+  updatedAt?: string;
 };
 
 export type Category = {
@@ -82,6 +85,9 @@ export const api = {
   resetPassword: (payload: { token: string; password: string; confirmPassword: string }) =>
     request<{ message: string }>("/auth/reset-password", { method: "POST", body: JSON.stringify(payload) }),
   me: () => request<{ user: User }>("/auth/me"),
+  userProfile: () => request<{ user: User }>("/users/me"),
+  updateProfile: (payload: { name?: string; birthDate?: string | null; profileImageUrl?: string | null }) =>
+    request<{ user: User }>("/users/me", { method: "PATCH", body: JSON.stringify(payload) }),
   categories: () => request<{ categories: Category[] }>("/categories"),
   moods: () => request<{ entries: MoodEntry[] }>("/moods"),
   createMood: (payload: {

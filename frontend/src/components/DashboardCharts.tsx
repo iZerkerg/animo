@@ -1,6 +1,7 @@
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { timeOfDayLabels, uiText } from "../constants/text";
 import type { MoodEntry } from "../services/api";
+import { formatCivilDateShort } from "../utils/date";
 
 type Props = {
   entries: MoodEntry[];
@@ -30,7 +31,7 @@ export function DashboardCharts({ entries }: Props) {
     (item) => `${item.name} - ${item.emotion}`
   ).slice(0, 8);
   const evolution = entries.slice(-14).map((entry) => ({
-    date: new Date(entry.date).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" }),
+    date: formatCivilDateShort(entry.date).slice(0, 5),
     score: entryScore(entry),
     emotion: getEntryEmotions(entry).map((item) => item.emotion).join(", ")
   }));

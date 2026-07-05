@@ -1,4 +1,4 @@
-import { CalendarDays, ChartNoAxesColumnIncreasing, LogOut, PenLine } from "lucide-react";
+import { CalendarDays, ChartNoAxesColumnIncreasing, PenLine, UserCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarView } from "../components/CalendarView";
 import { DashboardCharts } from "../components/DashboardCharts";
@@ -7,20 +7,23 @@ import { ReminderSettings } from "../components/ReminderSettings";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { uiText } from "../constants/text";
 import type { ThemeMode } from "../hooks/useTheme";
+import { ProfilePage } from "./ProfilePage";
 import { api, clearToken, type Category, type MoodEntry, type User } from "../services/api";
+import { isBirthdayToday, isSameCivilDay } from "../utils/date";
 
 type Props = {
   user: User;
   onLogout: () => void;
+  onUserUpdated: (user: User) => void;
   themeMode: ThemeMode;
   onThemeChange: (mode: ThemeMode) => void;
 };
 
-export function AppPage({ user, onLogout, onThemeChange, themeMode }: Props) {
+export function AppPage({ user, onLogout, onThemeChange, onUserUpdated, themeMode }: Props) {
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [summary, setSummary] = useState<string[]>([]);
-  const [activeView, setActiveView] = useState<"home" | "calendar" | "stats">("home");
+  const [activeView, setActiveView] = useState<"home" | "calendar" | "stats" | "profile">("home");
 
   async function refresh() {
     const [moodsData, categoriesData, statsData] = await Promise.all([api.moods(), api.categories(), api.stats()]);
@@ -34,8 +37,8 @@ export function AppPage({ user, onLogout, onThemeChange, themeMode }: Props) {
   }, []);
 
   const todayEntries = useMemo(() => {
-    const today = new Date().toDateString();
-    return entries.filter((entry) => new Date(entry.date).toDateString() === today);
+    const today = new Date();
+    return entries.filter((entry) => isSameCivilDay(entry.date, today));
   }, [entries]);
 
   function logout() {
@@ -56,8 +59,8 @@ export function AppPage({ user, onLogout, onThemeChange, themeMode }: Props) {
         <button className={activeView === "stats" ? "nav-item active" : "nav-item"} onClick={() => setActiveView("stats")}>
           <ChartNoAxesColumnIncreasing size={18} /> {uiText.nav.charts}
         </button>
-        <button className="nav-item logout" onClick={logout}>
-          <LogOut size={18} /> {uiText.nav.logout}
+        <button className={activeView === "profile" ? "nav-item active" : "nav-item"} onClick={() => setActiveView("profile")}>
+          <UserCircle size={18} /> {uiText.nav.profile}
         </button>
       </aside>
 
@@ -65,7 +68,7 @@ export function AppPage({ user, onLogout, onThemeChange, themeMode }: Props) {
         <header className="topbar">
           <div>
             <p>{uiText.home.greeting}, {user.name}</p>
-            <h1>{uiText.home.title}</h1>
+            <h1>{activeView === "profile" ? uiText.profile.title : uiText.home.title}</h1>
           </div>
           <div className="topbar-actions">
             <ThemeToggle compact mode={themeMode} onChange={onThemeChange} />
@@ -79,6 +82,11 @@ export function AppPage({ user, onLogout, onThemeChange, themeMode }: Props) {
           <div className="home-grid">
             <MoodForm categories={categories} onCreated={refresh} />
             <div className="stack">
+              {isBirthdayToday(user.birthDate) && (
+                <div className="panel birthday-card">
+                  <p>{uiText.home.birthday.replace("{name}", user.name)}</p>
+                </div>
+              )}
               <div className="panel today-card">
                 <div className="section-title">
                   <span>{uiText.home.todaySummary}</span>
@@ -112,6 +120,7 @@ export function AppPage({ user, onLogout, onThemeChange, themeMode }: Props) {
 
         {activeView === "calendar" && <CalendarView entries={entries} />}
         {activeView === "stats" && <DashboardCharts entries={entries} />}
+        {activeView === "profile" && <ProfilePage user={user} onLogout={logout} onUserUpdated={onUserUpdated} />}
       </section>
     </main>
   );

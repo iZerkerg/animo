@@ -1,9 +1,10 @@
-import { addMonths, eachDayOfInterval, endOfMonth, format, isSameDay, startOfMonth, subMonths } from "date-fns";
+import { addMonths, eachDayOfInterval, endOfMonth, format, startOfMonth, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { timeOfDayLabels, uiText } from "../constants/text";
 import type { MoodEntry } from "../services/api";
+import { formatDateObjectShort, isSameCivilDay } from "../utils/date";
 
 type Props = {
   entries: MoodEntry[];
@@ -25,10 +26,10 @@ export function CalendarView({ entries }: Props) {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const days = useMemo(() => eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) }), [month]);
-  const selectedEntries = entries.filter((entry) => isSameDay(new Date(entry.date), selectedDate));
+  const selectedEntries = entries.filter((entry) => isSameCivilDay(entry.date, selectedDate));
 
   function dominantEmotion(day: Date) {
-    const dayEntries = entries.filter((entry) => isSameDay(new Date(entry.date), day));
+    const dayEntries = entries.filter((entry) => isSameCivilDay(entry.date, day));
     const counts = new Map<string, { total: number; emoji: string; intensity: number }>();
     dayEntries.forEach((entry) => {
       getEntryEmotions(entry).forEach((item) => {
@@ -76,7 +77,7 @@ export function CalendarView({ entries }: Props) {
       </div>
 
       <div className="day-detail">
-        <h3>{format(selectedDate, "dd/MM/yyyy")}</h3>
+        <h3>{formatDateObjectShort(selectedDate)}</h3>
         {selectedEntries.length === 0 ? (
           <p>{uiText.calendar.noEntries}</p>
         ) : (

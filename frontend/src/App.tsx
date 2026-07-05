@@ -44,7 +44,15 @@ export function App() {
   if (loading) return <div className="loading-screen">{uiText.loading}</div>;
 
   if (user) {
-    return <AppPage themeMode={theme.mode} onThemeChange={theme.setMode} user={user} onLogout={() => setUser(null)} />;
+    return (
+      <AppPage
+        themeMode={theme.mode}
+        user={user}
+        onLogout={() => setUser(null)}
+        onThemeChange={theme.setMode}
+        onUserUpdated={setUser}
+      />
+    );
   }
 
   if (authRoute === "forgot-password") {
