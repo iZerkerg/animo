@@ -561,7 +561,16 @@ textarea:focus {
     height: auto;
     flex-direction: row;
     flex-wrap: wrap;
+    align-items: center;
     padding: 14px;
+  }
+
+  .nav-item,
+  .logout {
+    flex: 0 1 auto;
+    height: 46px;
+    min-height: 46px;
+    align-items: center;
   }
 
   .compact-brand {
@@ -628,18 +637,24 @@ textarea:focus {
   }
 
   .sidebar {
-    position: fixed;
+    position: fixed !important;
+    top: auto;
     right: 0;
     bottom: 0;
     left: 0;
     z-index: 30;
-    display: grid;
-    height: auto;
+    display: grid !important;
+    width: 100%;
+    height: calc(72px + env(safe-area-inset-bottom));
+    min-height: 0;
+    max-height: calc(76px + env(safe-area-inset-bottom));
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
     border-top: 1px solid rgba(124, 63, 88, 0.14);
     border-right: 0;
-    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 -12px 30px rgba(124, 63, 88, 0.12);
   }
@@ -650,15 +665,23 @@ textarea:focus {
 
   .nav-item,
   .logout {
-    display: grid;
-    min-height: 56px;
-    justify-items: center;
+    display: flex !important;
+    width: 100%;
+    min-width: 0;
+    height: 58px;
+    min-height: 0;
+    max-height: 58px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: 3px;
     margin: 0;
-    padding: 6px 4px;
+    padding: 5px 3px;
     font-size: 0.78rem;
     line-height: 1.1;
     text-align: center;
+    white-space: nowrap;
+    box-shadow: none;
   }
 
   .nav-item svg {
@@ -796,6 +819,56 @@ textarea:focus {
     padding: 0 4px;
     font-size: 1rem;
     line-height: 1.25;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    display: block;
+    min-height: 100dvh;
+  }
+
+  .sidebar {
+    position: fixed !important;
+    top: auto !important;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid !important;
+    width: 100%;
+    height: calc(68px + env(safe-area-inset-bottom)) !important;
+    min-height: 0 !important;
+    max-height: calc(76px + env(safe-area-inset-bottom)) !important;
+    grid-template-columns: repeat(4, 1fr);
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  }
+
+  .nav-item,
+  .logout {
+    display: flex !important;
+    height: 100%;
+    min-height: 0 !important;
+    max-height: 56px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 5px 3px;
+    font-size: 0.76rem;
+    line-height: 1.1;
+  }
+
+  .nav-item svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+  }
+
+  .content {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
   }
 }
 
