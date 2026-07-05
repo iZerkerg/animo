@@ -36,10 +36,10 @@ npm install
 
 ```bash
 cp .env.example backend/.env
-cp .env.example frontend/.env
+printf 'VITE_API_URL="http://localhost:4000/api"\n' > frontend/.env
 ```
 
-3. Edita `backend/.env` con tu `DATABASE_URL` de PostgreSQL y un `JWT_SECRET` largo. Para desarrollo puedes usar servicios como Supabase, Neon, Railway o Render PostgreSQL.
+3. Edita `backend/.env` con tu `DATABASE_URL` de PostgreSQL, un `JWT_SECRET` largo y las variables de Supabase Storage. Para desarrollo puedes usar servicios como Supabase, Neon, Railway o Render PostgreSQL.
 
 4. Genera Prisma y crea las tablas:
 
@@ -66,6 +66,9 @@ JWT_SECRET="replace-with-a-long-random-secret"
 JWT_EXPIRES_IN="7d"
 PORT=4000
 FRONTEND_URL="http://localhost:5173"
+SUPABASE_URL="https://<project-ref>.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="replace-with-your-service-role-key"
+SUPABASE_STORAGE_BUCKET="profile-images"
 VITE_API_URL="http://localhost:4000/api"
 ```
 
@@ -84,6 +87,25 @@ EMAIL_FROM="Ánimo <no-reply@example.com>"
 
 Si SMTP no está configurado, el backend mantiene los recordatorios y los correos funcionan en modo dry-run sin imprimir tokens completos.
 
+`SUPABASE_SERVICE_ROLE_KEY` debe existir solo en `backend/.env`. No la agregues a `frontend/.env` ni a variables `VITE_*`.
+
+## Supabase Storage
+
+La subida de foto de perfil usa Supabase Storage desde el backend y guarda la URL resultante en `User.profileImageUrl`.
+
+Configuración manual en Supabase:
+
+1. Entra a tu proyecto de Supabase.
+2. Ve a Storage.
+3. Crea un bucket llamado `profile-images`.
+4. Marca el bucket como Public si quieres usar URLs públicas directamente.
+5. En allowed MIME types, permite `image/jpeg`, `image/png` e `image/webp`.
+6. Define un file size limit de 5 MB o menos.
+7. Copia `Project URL` en `SUPABASE_URL`.
+8. Copia la clave `service_role` en `SUPABASE_SERVICE_ROLE_KEY` solo para el backend.
+
+El endpoint `POST /api/users/me/profile-image` requiere JWT, recibe `multipart/form-data` con el campo `profileImage`, valida JPG/PNG/WEBP y sube el archivo en memoria sin guardarlo en disco.
+
 ## Recuperación de contraseña
 
 El flujo usa `POST /api/auth/forgot-password` y `POST /api/auth/reset-password`.
@@ -97,7 +119,7 @@ El flujo usa `POST /api/auth/forgot-password` y `POST /api/auth/reset-password`.
 ## Funcionalidades incluidas
 
 - Registro, login, persistencia de sesión con JWT y logout.
-- Perfil de usuario con nombre, fecha de nacimiento, URL de foto y avatar por defecto.
+- Perfil de usuario con nombre, fecha de nacimiento, subida de foto y avatar por defecto.
 - Cada usuario ve solo sus propios registros.
 - Registro de ánimo por mañana, tarde y noche.
 - Emociones con emoji, nota y categorías.

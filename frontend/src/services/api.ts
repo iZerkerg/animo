@@ -60,7 +60,11 @@ export function clearToken() {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
+  const isFormData = options.body instanceof FormData;
+
+  if (!isFormData) {
+    headers.set("Content-Type", "application/json");
+  }
 
   const token = getToken();
   if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -86,8 +90,13 @@ export const api = {
     request<{ message: string }>("/auth/reset-password", { method: "POST", body: JSON.stringify(payload) }),
   me: () => request<{ user: User }>("/auth/me"),
   userProfile: () => request<{ user: User }>("/users/me"),
-  updateProfile: (payload: { name?: string; birthDate?: string | null; profileImageUrl?: string | null }) =>
+  updateProfile: (payload: { name?: string; birthDate?: string | null }) =>
     request<{ user: User }>("/users/me", { method: "PATCH", body: JSON.stringify(payload) }),
+  uploadProfileImage: (file: File) => {
+    const formData = new FormData();
+    formData.append("profileImage", file);
+    return request<{ user: User; profileImageUrl: string }>("/users/me/profile-image", { method: "POST", body: formData });
+  },
   categories: () => request<{ categories: Category[] }>("/categories"),
   moods: () => request<{ entries: MoodEntry[] }>("/moods"),
   createMood: (payload: {

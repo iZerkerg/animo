@@ -702,6 +702,7 @@ textarea:focus {
   grid-template-columns: minmax(260px, 0.75fr) minmax(0, 1.25fr);
   gap: 22px;
   align-items: start;
+  max-width: 980px;
 }
 
 .profile-card {
@@ -722,6 +723,11 @@ textarea:focus {
   color: var(--muted);
   font-weight: 800;
   overflow-wrap: anywhere;
+}
+
+.profile-card .success-text {
+  width: 100%;
+  margin: 0;
 }
 
 .user-avatar {
@@ -781,6 +787,62 @@ textarea:focus {
 
 .profile-form .status-text {
   color: var(--muted);
+}
+
+.profile-form .user-avatar {
+  justify-self: center;
+  margin-bottom: 4px;
+}
+
+.profile-image-picker {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-image-picker > span:first-child {
+  color: var(--heading);
+  font-weight: 900;
+}
+
+.profile-image-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.profile-image-action {
+  display: inline-flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--heading);
+  padding: 0 16px;
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.profile-image-picker:hover .profile-image-action,
+.profile-image-picker:focus-within .profile-image-action {
+  border-color: var(--primary);
+  background: var(--focus);
+  transform: translateY(-1px);
+}
+
+.profile-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 12px;
+  align-items: center;
 }
 
 .logout-profile {
@@ -1185,6 +1247,7 @@ textarea:focus {
   }
 
   .form-row,
+  .profile-actions,
   .reminder-row,
   .button-row {
     grid-template-columns: 1fr;
