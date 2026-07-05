@@ -232,6 +232,48 @@ textarea:focus {
   box-shadow: 0 0 0 3px var(--focus);
 }
 
+.password-field {
+  position: relative;
+  display: block;
+}
+
+.password-field input {
+  padding-right: 54px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+  transform: translateY(-50%);
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.password-toggle:hover {
+  background: var(--surface-tint);
+  color: var(--heading);
+}
+
+.password-toggle:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.password-toggle:active {
+  transform: translateY(-50%) scale(0.96);
+}
+
 .primary-action {
   display: inline-flex;
   align-items: center;
@@ -247,17 +289,74 @@ textarea:focus {
   box-shadow: var(--shadow-soft);
 }
 
+.primary-action:disabled,
+.auth-tabs button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.button-spinner {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border: 2px solid color-mix(in srgb, var(--primary-contrast) 35%, transparent);
+  border-top-color: var(--primary-contrast);
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .primary-action.compact {
   width: auto;
   padding: 0 18px;
 }
 
+.text-action {
+  width: fit-content;
+  min-height: 38px;
+  border: 0;
+  background: transparent;
+  color: var(--brand);
+  padding: 0;
+  font-weight: 900;
+}
+
+.text-action:hover {
+  color: var(--heading);
+  text-decoration: underline;
+}
+
+.text-action:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.text-action.centered {
+  justify-self: center;
+  margin-top: 4px;
+}
+
 .error-text,
+.success-text,
 .soft-warning {
   border-radius: 8px;
   padding: 10px 12px;
+}
+
+.error-text,
+.soft-warning {
   background: var(--danger-bg);
   color: var(--danger-text);
+}
+
+.success-text {
+  background: var(--accent-green-soft);
+  color: var(--heading);
 }
 
 .app-shell {

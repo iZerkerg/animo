@@ -80,7 +80,19 @@ SMTP_PASS="secret"
 EMAIL_FROM="Ánimo <no-reply@example.com>"
 ```
 
-Si SMTP no está configurado, el backend mantiene los recordatorios y el endpoint de prueba funciona en modo dry-run.
+`FRONTEND_URL` se usa para construir enlaces de recuperación de contraseña, por ejemplo `https://tu-dominio/reset-password?token=...`.
+
+Si SMTP no está configurado, el backend mantiene los recordatorios y los correos funcionan en modo dry-run sin imprimir tokens completos.
+
+## Recuperación de contraseña
+
+El flujo usa `POST /api/auth/forgot-password` y `POST /api/auth/reset-password`.
+
+- El formulario `/forgot-password` solicita el correo y siempre muestra una respuesta genérica para no revelar si la cuenta existe.
+- El backend genera un token aleatorio, guarda solo su hash SHA-256, lo marca como usado al restablecer y lo expira a los 30 minutos.
+- El correo envía al usuario a `/reset-password?token=...`.
+- El formulario `/reset-password` valida contraseña y confirmación antes de enviar.
+- Hay un rate limit básico en memoria para reducir abuso de solicitudes por IP/correo.
 
 ## Funcionalidades incluidas
 

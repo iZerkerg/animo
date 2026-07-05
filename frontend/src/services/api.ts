@@ -77,6 +77,10 @@ export const api = {
     request<{ user: User; token: string }>("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
   login: (payload: { email: string; password: string }) =>
     request<{ user: User; token: string }>("/auth/login", { method: "POST", body: JSON.stringify(payload) }),
+  forgotPassword: (payload: { email: string }) =>
+    request<{ message: string }>("/auth/forgot-password", { method: "POST", body: JSON.stringify(payload) }),
+  resetPassword: (payload: { token: string; password: string; confirmPassword: string }) =>
+    request<{ message: string }>("/auth/reset-password", { method: "POST", body: JSON.stringify(payload) }),
   me: () => request<{ user: User }>("/auth/me"),
   categories: () => request<{ categories: Category[] }>("/categories"),
   moods: () => request<{ entries: MoodEntry[] }>("/moods"),

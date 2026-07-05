@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { loginUser, registerUser } from "../services/auth.service.js";
+import { loginUser, registerUser, requestPasswordReset, resetPassword } from "../services/auth.service.js";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 import { prisma } from "../config/prisma.js";
 
@@ -16,6 +16,34 @@ const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8)
 });
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email()
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(20),
+  password: z.string().min(8),
+  confirmPassword: z.string().min(8)
+}).refine((data) => data.password === data.confirmPassword, {
+  path: ["confirmPassword"],
+  message: "Las contraseñas no coinciden"
+});
+
+const forgotPasswordMessage = "Si el correo está registrado, recibirás instrucciones para restablecer tu contraseña.";
+const resetAttempts = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(key: string) {
+  const now = Date.now();
+  const current = resetAttempts.get(key);
+  if (!current || current.resetAt <= now) {
+    resetAttempts.set(key, { count: 1, resetAt: now + 15 * 60 * 1000 });
+    return false;
+  }
+
+  current.count += 1;
+  return current.count > 5;
+}
 
 authRouter.post("/register", async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
@@ -41,6 +69,37 @@ authRouter.post("/login", async (req, res) => {
     return res.json(result);
   } catch {
     return res.status(401).json({ message: "Correo o contraseña incorrectos" });
+  }
+});
+
+authRouter.post("/forgot-password", async (req, res) => {
+  const parsed = forgotPasswordSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: "Datos inválidos", issues: parsed.error.flatten() });
+
+  const email = parsed.data.email.toLowerCase();
+  const key = `${req.ip}:${email}`;
+  if (isRateLimited(key)) {
+    return res.status(429).json({ message: "Demasiadas solicitudes. Intenta nuevamente más tarde." });
+  }
+
+  try {
+    await requestPasswordReset(email);
+  } catch {
+    return res.json({ message: forgotPasswordMessage });
+  }
+
+  return res.json({ message: forgotPasswordMessage });
+});
+
+authRouter.post("/reset-password", async (req, res) => {
+  const parsed = resetPasswordSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: "Datos inválidos", issues: parsed.error.flatten() });
+
+  try {
+    await resetPassword(parsed.data.token, parsed.data.password);
+    return res.json({ message: "Tu contraseña fue actualizada. Ya puedes iniciar sesión." });
+  } catch {
+    return res.status(400).json({ message: "El enlace no es válido o ya expiró. Solicita uno nuevo." });
   }
 });
 

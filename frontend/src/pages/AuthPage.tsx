@@ -1,5 +1,7 @@
 import { Heart } from "lucide-react";
 import { useState } from "react";
+import { LoadingButton } from "../components/LoadingButton";
+import { PasswordInput } from "../components/PasswordInput";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { uiText } from "../constants/text";
 import type { ThemeMode } from "../hooks/useTheme";
@@ -7,20 +9,25 @@ import { api, setToken, type User } from "../services/api";
 
 type Props = {
   onAuthenticated: (user: User) => void;
+  onForgotPassword: () => void;
   themeMode: ThemeMode;
   onThemeChange: (mode: ThemeMode) => void;
 };
 
-export function AuthPage({ onAuthenticated, onThemeChange, themeMode }: Props) {
+export function AuthPage({ onAuthenticated, onForgotPassword, onThemeChange, themeMode }: Props) {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (isLoading) return;
+
     setError("");
+    setIsLoading(true);
     try {
       const response =
         mode === "register" ? await api.register({ name, email, password }) : await api.login({ email, password });
@@ -28,6 +35,7 @@ export function AuthPage({ onAuthenticated, onThemeChange, themeMode }: Props) {
       onAuthenticated(response.user);
     } catch (err) {
       setError((err as Error).message);
+      setIsLoading(false);
     }
   }
 
@@ -46,10 +54,10 @@ export function AuthPage({ onAuthenticated, onThemeChange, themeMode }: Props) {
 
       <form className="auth-card" onSubmit={submit}>
         <div className="auth-tabs">
-          <button type="button" className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>
+          <button disabled={isLoading} type="button" className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>
             {uiText.auth.loginTab}
           </button>
-          <button type="button" className={mode === "register" ? "active" : ""} onClick={() => setMode("register")}>
+          <button disabled={isLoading} type="button" className={mode === "register" ? "active" : ""} onClick={() => setMode("register")}>
             {uiText.auth.registerTab}
           </button>
         </div>
@@ -64,13 +72,29 @@ export function AuthPage({ onAuthenticated, onThemeChange, themeMode }: Props) {
           {uiText.auth.email}
           <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
         </label>
-        <label>
-          {uiText.auth.password}
-          <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} />
-        </label>
+        <PasswordInput
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
+          label={uiText.auth.password}
+          minLength={8}
+          required
+          value={password}
+          onChange={setPassword}
+        />
+        {mode === "login" && (
+          <button className="text-action" type="button" onClick={onForgotPassword}>
+            {uiText.auth.forgotPassword}
+          </button>
+        )}
 
         {error && <p className="error-text">{error}</p>}
-        <button className="primary-action">{mode === "login" ? uiText.auth.loginAction : uiText.auth.registerAction}</button>
+        <LoadingButton
+          className="primary-action"
+          loading={isLoading}
+          loadingLabel={mode === "login" ? uiText.auth.loginLoading : uiText.auth.registerLoading}
+          type="submit"
+        >
+          {mode === "login" ? uiText.auth.loginAction : uiText.auth.registerAction}
+        </LoadingButton>
       </form>
     </main>
   );

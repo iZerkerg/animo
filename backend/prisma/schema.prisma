@@ -15,13 +15,14 @@ enum TimeOfDay {
 }
 
 model User {
-  id               String            @id @default(cuid())
-  name             String
-  email            String            @unique
-  passwordHash     String
-  createdAt        DateTime          @default(now())
-  moodEntries      MoodEntry[]
-  reminderSettings ReminderSetting[]
+  id                  String               @id @default(cuid())
+  name                String
+  email               String               @unique
+  passwordHash        String
+  createdAt           DateTime             @default(now())
+  moodEntries         MoodEntry[]
+  reminderSettings    ReminderSetting[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model MoodEntry {
@@ -70,4 +71,17 @@ model ReminderSetting {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, timeOfDay])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
