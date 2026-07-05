@@ -5,7 +5,7 @@ const positive = new Set(["Feliz", "Tranquila", "Motivada"]);
 export function buildSummary(entries: Array<MoodEntry & { categories: Category[] }>) {
   if (!entries.length) {
     return [
-      "Aun no hay registros para resumir. Un primer registro ya empieza a dibujar tu mapa emocional."
+      "Aún no hay registros para resumir. Un primer registro ya empieza a dibujar tu mapa emocional."
     ];
   }
 
@@ -30,14 +30,14 @@ export function buildSummary(entries: Array<MoodEntry & { categories: Category[]
   const positiveMorning = entries.filter((entry) => entry.timeOfDay === "morning" && positive.has(entry.emotion)).length;
 
   const phrases = [
-    `Esta semana tu emocion mas frecuente fue ${topEmotion[0].toLowerCase()}.`,
-    `Registraste tu animo ${entries.length} veces esta semana.`,
+    `Esta semana tu emoción más frecuente fue ${topEmotion[0].toLowerCase()}.`,
+    `Registraste tu ánimo ${entries.length} veces esta semana.`,
     topAnxietyCategory
-      ? `La categoria mas asociada a ansiedad fue ${topAnxietyCategory[0].toLowerCase()}.`
-      : "No hay una categoria claramente asociada a ansiedad esta semana.",
+      ? `La categoría más asociada a ansiedad fue ${topAnxietyCategory[0].toLowerCase()}.`
+      : "No hay una categoría claramente asociada a ansiedad esta semana.",
     positiveMorning > 0 && topTime?.[0] === "morning"
-      ? "Tu animo fue mas positivo durante las mananas."
-      : `Tu momento con mas registros fue ${labelTime(topTime?.[0] ?? "morning")}.`
+      ? "Tu ánimo fue más positivo durante las mañanas."
+      : `Tu momento con más registros fue ${labelTime(topTime?.[0] ?? "morning")}.`
   ];
 
   return phrases;
@@ -45,7 +45,7 @@ export function buildSummary(entries: Array<MoodEntry & { categories: Category[]
 
 function labelTime(value: string) {
   return {
-    morning: "la manana",
+    morning: "la mañana",
     afternoon: "la tarde",
     evening: "la noche"
   }[value] ?? value;

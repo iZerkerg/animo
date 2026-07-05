@@ -1,5 +1,6 @@
 import { Heart } from "lucide-react";
 import { useState } from "react";
+import { uiText } from "../constants/text";
 import { api, setToken, type User } from "../services/api";
 
 type Props = {
@@ -30,39 +31,39 @@ export function AuthPage({ onAuthenticated }: Props) {
     <main className="auth-shell">
       <section className="auth-hero">
         <div className="brand-mark">
-          <Heart size={24} /> Animo
+          <Heart size={24} /> {uiText.brand}
         </div>
-        <h1>Un diario emocional con mirada de dashboard.</h1>
-        <p>Registra lo que sientes, descubre patrones y vuelve a ti con suavidad.</p>
+        <h1>{uiText.auth.headline}</h1>
+        <p>{uiText.auth.subtitle}</p>
       </section>
 
       <form className="auth-card" onSubmit={submit}>
         <div className="auth-tabs">
           <button type="button" className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>
-            Entrar
+            {uiText.auth.loginTab}
           </button>
           <button type="button" className={mode === "register" ? "active" : ""} onClick={() => setMode("register")}>
-            Registro
+            {uiText.auth.registerTab}
           </button>
         </div>
 
         {mode === "register" && (
           <label>
-            Nombre
+            {uiText.auth.name}
             <input value={name} onChange={(event) => setName(event.target.value)} required minLength={2} />
           </label>
         )}
         <label>
-          Correo
+          {uiText.auth.email}
           <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
         </label>
         <label>
-          Contrasena
+          {uiText.auth.password}
           <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} />
         </label>
 
         {error && <p className="error-text">{error}</p>}
-        <button className="primary-action">{mode === "login" ? "Iniciar sesion" : "Crear cuenta"}</button>
+        <button className="primary-action">{mode === "login" ? uiText.auth.loginAction : uiText.auth.registerAction}</button>
       </form>
     </main>
   );

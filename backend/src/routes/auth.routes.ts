@@ -19,14 +19,14 @@ const loginSchema = z.object({
 
 authRouter.post("/register", async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ message: "Datos invalidos", issues: parsed.error.flatten() });
+  if (!parsed.success) return res.status(400).json({ message: "Datos inválidos", issues: parsed.error.flatten() });
 
   try {
     const result = await registerUser(parsed.data.name, parsed.data.email, parsed.data.password);
     return res.status(201).json(result);
   } catch (error) {
     if ((error as Error).message === "EMAIL_IN_USE") {
-      return res.status(409).json({ message: "El correo ya esta registrado" });
+      return res.status(409).json({ message: "El correo ya está registrado" });
     }
     return res.status(500).json({ message: "No se pudo registrar el usuario" });
   }
@@ -34,13 +34,13 @@ authRouter.post("/register", async (req, res) => {
 
 authRouter.post("/login", async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ message: "Datos invalidos", issues: parsed.error.flatten() });
+  if (!parsed.success) return res.status(400).json({ message: "Datos inválidos", issues: parsed.error.flatten() });
 
   try {
     const result = await loginUser(parsed.data.email, parsed.data.password);
     return res.json(result);
   } catch {
-    return res.status(401).json({ message: "Correo o contrasena incorrectos" });
+    return res.status(401).json({ message: "Correo o contraseña incorrectos" });
   }
 });
 

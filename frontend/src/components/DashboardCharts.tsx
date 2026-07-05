@@ -1,4 +1,5 @@
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { timeOfDayLabels, uiText } from "../constants/text";
 import type { MoodEntry } from "../services/api";
 
 type Props = {
@@ -20,7 +21,7 @@ const colors = ["#f7a8c4", "#9bd6c5", "#f9d46b", "#a7c7e7", "#cdb4db", "#ffb4a2"
 
 export function DashboardCharts({ entries }: Props) {
   const byEmotion = groupCount(entries, (entry) => entry.emotion);
-  const byTime = groupCount(entries, (entry) => entry.timeOfDay);
+  const byTime = groupCount(entries, (entry) => timeOfDayLabels[entry.timeOfDay]);
   const byCategory = groupCount(
     entries.flatMap((entry) => entry.categories.map((category) => ({ name: category.name, emotion: entry.emotion }))),
     (item) => `${item.name} - ${item.emotion}`
@@ -37,16 +38,16 @@ export function DashboardCharts({ entries }: Props) {
   return (
     <div className="dashboard-grid">
       <div className="panel metric-card">
-        <span>Promedio semanal</span>
+        <span>{uiText.dashboard.weeklyAverage}</span>
         <strong>{weeklyAverage.toFixed(1)}</strong>
       </div>
       <div className="panel metric-card">
-        <span>Promedio mensual</span>
+        <span>{uiText.dashboard.monthlyAverage}</span>
         <strong>{monthlyAverage.toFixed(1)}</strong>
       </div>
 
       <div className="panel chart-card wide">
-        <h2>Evolucion reciente</h2>
+        <h2>{uiText.dashboard.recentEvolution}</h2>
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={evolution}>
             <CartesianGrid strokeDasharray="3 3" stroke="#eadfe8" />
@@ -59,7 +60,7 @@ export function DashboardCharts({ entries }: Props) {
       </div>
 
       <div className="panel chart-card">
-        <h2>Emociones frecuentes</h2>
+        <h2>{uiText.dashboard.frequentEmotions}</h2>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={byEmotion}>
             <CartesianGrid strokeDasharray="3 3" stroke="#eadfe8" />
@@ -76,7 +77,7 @@ export function DashboardCharts({ entries }: Props) {
       </div>
 
       <div className="panel chart-card">
-        <h2>Momento del dia</h2>
+        <h2>{uiText.dashboard.timeOfDay}</h2>
         <ResponsiveContainer width="100%" height={260}>
           <PieChart>
             <Pie data={byTime} dataKey="total" nameKey="name" outerRadius={86} label>
@@ -90,7 +91,7 @@ export function DashboardCharts({ entries }: Props) {
       </div>
 
       <div className="panel chart-card wide">
-        <h2>Emociones por categoria</h2>
+        <h2>{uiText.dashboard.emotionsByCategory}</h2>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={byCategory}>
             <CartesianGrid strokeDasharray="3 3" stroke="#eadfe8" />

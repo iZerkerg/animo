@@ -1,5 +1,6 @@
 import { Bell, Send } from "lucide-react";
 import { useEffect, useState } from "react";
+import { timeOfDayLabels, uiText } from "../constants/text";
 import type { ReminderSetting, TimeOfDay } from "../services/api";
 import { api } from "../services/api";
 
@@ -8,12 +9,6 @@ const defaults: ReminderSetting[] = [
   { timeOfDay: "afternoon", enabled: true, time: "15:00" },
   { timeOfDay: "evening", enabled: true, time: "21:00" }
 ];
-
-const labels: Record<TimeOfDay, string> = {
-  morning: "Manana",
-  afternoon: "Tarde",
-  evening: "Noche"
-};
 
 export function ReminderSettings() {
   const [settings, setSettings] = useState<ReminderSetting[]>(defaults);
@@ -35,7 +30,7 @@ export function ReminderSettings() {
     const data = await api.saveReminders(settings);
     setSettings(mergeSettings(data.settings));
     setEmailConfigured(data.emailConfigured);
-    setMessage("Recordatorios guardados.");
+    setMessage(uiText.reminders.saved);
   }
 
   async function testEmail() {
@@ -46,11 +41,11 @@ export function ReminderSettings() {
   return (
     <div className="panel reminders">
       <div className="section-title">
-        <span>Recordatorios</span>
+        <span>{uiText.reminders.title}</span>
         <Bell size={20} />
       </div>
 
-      {!emailConfigured && <p className="soft-warning">SMTP aun no esta configurado. Puedes guardar horarios y probar el modo dry-run.</p>}
+      {!emailConfigured && <p className="soft-warning">{uiText.reminders.smtpWarning}</p>}
 
       {settings.map((setting) => (
         <div className="reminder-row" key={setting.timeOfDay}>
@@ -60,7 +55,7 @@ export function ReminderSettings() {
               checked={setting.enabled}
               onChange={(event) => updateSetting(setting.timeOfDay, { enabled: event.target.checked })}
             />
-            {labels[setting.timeOfDay]}
+            {timeOfDayLabels[setting.timeOfDay]}
           </label>
           <input type="time" value={setting.time} onChange={(event) => updateSetting(setting.timeOfDay, { time: event.target.value })} />
         </div>
@@ -68,10 +63,10 @@ export function ReminderSettings() {
 
       <div className="button-row">
         <button className="secondary-action" type="button" onClick={testEmail}>
-          <Send size={16} /> Probar correo
+          <Send size={16} /> {uiText.reminders.testEmail}
         </button>
         <button className="primary-action compact" type="button" onClick={save}>
-          Guardar
+          {uiText.reminders.save}
         </button>
       </div>
       {message && <p className="status-text">{message}</p>}

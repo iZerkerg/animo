@@ -28,8 +28,8 @@ export async function sendMoodReminderEmail(to: string, name: string, timeOfDay:
     html: `
       <div style="font-family:Inter,Arial,sans-serif;background:#fff7fb;padding:24px;color:#334155">
         <h2>Hola ${name}</h2>
-        <p>Este es tu recordatorio de la ${timeOfDay}. Respira un momento y registra tu estado de animo.</p>
-        <p style="margin-top:18px"><a href="${env.FRONTEND_URL}" style="background:#f6a6c9;color:#fff;padding:10px 16px;border-radius:12px;text-decoration:none">Registrar animo</a></p>
+        <p>Este es tu recordatorio de la ${timeOfDay}. Respira un momento y registra tu estado de ánimo.</p>
+        <p style="margin-top:18px"><a href="${env.FRONTEND_URL}" style="background:#f6a6c9;color:#fff;padding:10px 16px;border-radius:12px;text-decoration:none">Registrar ánimo</a></p>
       </div>
     `
   });

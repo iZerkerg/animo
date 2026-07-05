@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { uiText } from "./constants/text";
 import { AppPage } from "./pages/AppPage";
 import { AuthPage } from "./pages/AuthPage";
 import { api, clearToken, getToken, type User } from "./services/api";
@@ -16,7 +17,7 @@ export function App() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="loading-screen">Preparando tu diario...</div>;
+  if (loading) return <div className="loading-screen">{uiText.loading}</div>;
 
   return user ? <AppPage user={user} onLogout={() => setUser(null)} /> : <AuthPage onAuthenticated={setUser} />;
 }

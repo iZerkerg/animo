@@ -14,7 +14,7 @@ const envSchema = z.object({
   SMTP_SECURE: z.coerce.boolean().default(false),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-  EMAIL_FROM: z.string().default("Animo <no-reply@example.com>")
+  EMAIL_FROM: z.string().default("Ánimo <no-reply@example.com>")
 });
 
 export const env = envSchema.parse(process.env);

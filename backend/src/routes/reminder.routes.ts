@@ -27,7 +27,7 @@ reminderRouter.get("/", requireAuth, async (req: AuthRequest, res) => {
 
 reminderRouter.put("/", requireAuth, async (req: AuthRequest, res) => {
   const parsed = reminderSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ message: "Datos invalidos", issues: parsed.error.flatten() });
+  if (!parsed.success) return res.status(400).json({ message: "Datos inválidos", issues: parsed.error.flatten() });
 
   const settings = await Promise.all(
     parsed.data.settings.map((setting) =>
@@ -46,6 +46,6 @@ reminderRouter.post("/test", requireAuth, async (req: AuthRequest, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.user!.id } });
   if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
-  await sendMoodReminderEmail(user.email, user.name, "manana");
+  await sendMoodReminderEmail(user.email, user.name, "mañana");
   return res.json({ message: isEmailConfigured() ? "Correo de prueba enviado" : "Modo dry-run: configura SMTP para enviar correos reales" });
 });

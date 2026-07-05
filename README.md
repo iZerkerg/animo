@@ -1,13 +1,13 @@
-# Animo
+# Ánimo
 
-App web cliente-servidor para registrar estados de animo por usuario, con calendario, dashboard de tendencias y configuracion inicial de recordatorios por correo.
+App web cliente-servidor para registrar estados de ánimo por usuario, con calendario, dashboard de tendencias y configuración inicial de recordatorios por correo.
 
 ## Stack
 
 - Frontend: React + Vite + TypeScript + Recharts + Lucide.
 - Backend: Node.js + Express + TypeScript.
 - Base de datos: PostgreSQL gestionado con Prisma ORM.
-- Autenticacion: JWT.
+- Autenticación: JWT.
 - Correos: Nodemailer, listo para SMTP compatible con Resend, SendGrid, Mailtrap u otro proveedor.
 
 ## Estructura
@@ -24,7 +24,7 @@ frontend/
   src/services
 ```
 
-## Configuracion
+## Configuración
 
 1. Instala dependencias:
 
@@ -77,25 +77,25 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER="apikey-or-user"
 SMTP_PASS="secret"
-EMAIL_FROM="Animo <no-reply@example.com>"
+EMAIL_FROM="Ánimo <no-reply@example.com>"
 ```
 
-Si SMTP no esta configurado, el backend mantiene los recordatorios y el endpoint de prueba funciona en modo dry-run.
+Si SMTP no está configurado, el backend mantiene los recordatorios y el endpoint de prueba funciona en modo dry-run.
 
 ## Funcionalidades incluidas
 
-- Registro, login, persistencia de sesion con JWT y logout.
+- Registro, login, persistencia de sesión con JWT y logout.
 - Cada usuario ve solo sus propios registros.
-- Registro de animo por manana, tarde y noche.
-- Emociones con emoji, nota y categorias.
-- Calendario mensual con dias marcados por emocion predominante.
-- Dashboard con evolucion, emociones frecuentes, promedio semanal/mensual, categorias y distribucion por momento del dia.
-- Resumen automatico de tendencias semanales.
-- Configuracion de recordatorios por correo con servicio modular en `backend/src/services/email.service.ts`.
+- Registro de ánimo por mañana, tarde y noche.
+- Emociones con emoji, nota y categorías.
+- Calendario mensual con días marcados por emoción predominante.
+- Dashboard con evolución, emociones frecuentes, promedio semanal/mensual, categorías y distribución por momento del día.
+- Resumen automático de tendencias semanales.
+- Configuración de recordatorios por correo con servicio modular en `backend/src/services/email.service.ts`.
 
 ## Siguientes mejoras sugeridas
 
-- Agregar un job programado con cron o una cola para disparar recordatorios segun horario.
-- Anadir edicion y eliminacion de registros.
+- Agregar un job programado con cron o una cola para disparar recordatorios según horario.
+- Añadir edición y eliminación de registros.
 - Internacionalizar etiquetas de fechas con locale `es`.
-- Crear pruebas de API e integracion de frontend.
+- Crear pruebas de API e integración de frontend.

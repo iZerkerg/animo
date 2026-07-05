@@ -22,6 +22,6 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     req.user = { id: payload.userId, email: payload.email };
     return next();
   } catch {
-    return res.status(401).json({ message: "Token invalido o expirado" });
+    return res.status(401).json({ message: "Token inválido o expirado" });
   }
 }

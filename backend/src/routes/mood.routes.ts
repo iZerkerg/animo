@@ -28,7 +28,7 @@ moodRouter.get("/", requireAuth, async (req: AuthRequest, res) => {
 
 moodRouter.post("/", requireAuth, async (req: AuthRequest, res) => {
   const parsed = entrySchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ message: "Datos invalidos", issues: parsed.error.flatten() });
+  if (!parsed.success) return res.status(400).json({ message: "Datos inválidos", issues: parsed.error.flatten() });
 
   const entry = await prisma.moodEntry.create({
     data: {

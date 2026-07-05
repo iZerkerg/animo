@@ -1,23 +1,13 @@
 import { useState } from "react";
 import { format } from "date-fns";
+import { emotions, timeOfDayLabels, uiText } from "../constants/text";
 import type { Category, TimeOfDay } from "../services/api";
 import { api } from "../services/api";
 
-const emotions = [
-  { emotion: "Feliz", emoji: "😊", score: 5 },
-  { emotion: "Tranquila", emoji: "😌", score: 4 },
-  { emotion: "Ansiosa", emoji: "😟", score: 2 },
-  { emotion: "Triste", emoji: "😢", score: 1 },
-  { emotion: "Enojada", emoji: "😠", score: 1 },
-  { emotion: "Cansada", emoji: "😴", score: 2 },
-  { emotion: "Motivada", emoji: "✨", score: 5 },
-  { emotion: "Estresada", emoji: "😵", score: 2 }
-];
-
 const timeOptions: Array<{ value: TimeOfDay; label: string }> = [
-  { value: "morning", label: "Manana" },
-  { value: "afternoon", label: "Tarde" },
-  { value: "evening", label: "Noche" }
+  { value: "morning", label: timeOfDayLabels.morning },
+  { value: "afternoon", label: timeOfDayLabels.afternoon },
+  { value: "evening", label: timeOfDayLabels.evening }
 ];
 
 type Props = {
@@ -26,7 +16,7 @@ type Props = {
 };
 
 export function MoodForm({ categories, onCreated }: Props) {
-  const [selectedEmotion, setSelectedEmotion] = useState(emotions[0]);
+  const [selectedEmotion, setSelectedEmotion] = useState<(typeof emotions)[number]>(emotions[0]);
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("morning");
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [note, setNote] = useState("");
@@ -60,7 +50,7 @@ export function MoodForm({ categories, onCreated }: Props) {
   return (
     <form className="panel mood-form" onSubmit={handleSubmit}>
       <div className="section-title">
-        <span>Registro rapido</span>
+        <span>{uiText.moodForm.title}</span>
         <strong>{selectedEmotion.emoji}</strong>
       </div>
 
@@ -80,7 +70,7 @@ export function MoodForm({ categories, onCreated }: Props) {
 
       <div className="form-row">
         <label>
-          Momento
+          {uiText.moodForm.timeOfDay}
           <select value={timeOfDay} onChange={(event) => setTimeOfDay(event.target.value as TimeOfDay)}>
             {timeOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -90,14 +80,14 @@ export function MoodForm({ categories, onCreated }: Props) {
           </select>
         </label>
         <label>
-          Fecha
+          {uiText.moodForm.date}
           <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
         </label>
       </div>
 
       <label>
-        Nota
-        <textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Que paso? Que necesitas recordar?" />
+        {uiText.moodForm.note}
+        <textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder={uiText.moodForm.notePlaceholder} />
       </label>
 
       <div className="chips">
@@ -114,7 +104,7 @@ export function MoodForm({ categories, onCreated }: Props) {
       </div>
 
       <button className="primary-action" disabled={saving}>
-        {saving ? "Guardando..." : "Guardar registro"}
+        {saving ? uiText.moodForm.saving : uiText.moodForm.save}
       </button>
     </form>
   );

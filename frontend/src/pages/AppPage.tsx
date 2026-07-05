@@ -4,6 +4,7 @@ import { CalendarView } from "../components/CalendarView";
 import { DashboardCharts } from "../components/DashboardCharts";
 import { MoodForm } from "../components/MoodForm";
 import { ReminderSettings } from "../components/ReminderSettings";
+import { uiText } from "../constants/text";
 import { api, clearToken, type Category, type MoodEntry, type User } from "../services/api";
 
 type Props = {
@@ -41,29 +42,29 @@ export function AppPage({ user, onLogout }: Props) {
   return (
     <main className="app-shell">
       <aside className="sidebar">
-        <div className="brand-mark compact-brand">Animo</div>
+        <div className="brand-mark compact-brand">{uiText.brand}</div>
         <button className={activeView === "home" ? "nav-item active" : "nav-item"} onClick={() => setActiveView("home")}>
-          <PenLine size={18} /> Diario
+          <PenLine size={18} /> {uiText.nav.diary}
         </button>
         <button className={activeView === "calendar" ? "nav-item active" : "nav-item"} onClick={() => setActiveView("calendar")}>
-          <CalendarDays size={18} /> Calendario
+          <CalendarDays size={18} /> {uiText.nav.calendar}
         </button>
         <button className={activeView === "stats" ? "nav-item active" : "nav-item"} onClick={() => setActiveView("stats")}>
-          <ChartNoAxesColumnIncreasing size={18} /> Graficos
+          <ChartNoAxesColumnIncreasing size={18} /> {uiText.nav.charts}
         </button>
         <button className="nav-item logout" onClick={logout}>
-          <LogOut size={18} /> Salir
+          <LogOut size={18} /> {uiText.nav.logout}
         </button>
       </aside>
 
       <section className="content">
         <header className="topbar">
           <div>
-            <p>Hola, {user.name}</p>
-            <h1>Como se siente tu dia?</h1>
+            <p>{uiText.home.greeting}, {user.name}</p>
+            <h1>{uiText.home.title}</h1>
           </div>
           <button className="primary-action compact" onClick={() => setActiveView("home")}>
-            Registrar animo
+            {uiText.home.quickMood}
           </button>
         </header>
 
@@ -73,25 +74,25 @@ export function AppPage({ user, onLogout }: Props) {
             <div className="stack">
               <div className="panel today-card">
                 <div className="section-title">
-                  <span>Resumen de hoy</span>
+                  <span>{uiText.home.todaySummary}</span>
                   <strong>{todayEntries.length}</strong>
                 </div>
                 {todayEntries.length === 0 ? (
-                  <p>Hoy todavia no registras tu animo.</p>
+                  <p>{uiText.home.noEntriesToday}</p>
                 ) : (
                   todayEntries.map((entry) => (
                     <article key={entry.id} className="mini-entry">
                       <strong>
                         {entry.emoji} {entry.emotion}
                       </strong>
-                      <span>{entry.note || "Sin nota"}</span>
+                      <span>{entry.note || uiText.home.noNote}</span>
                     </article>
                   ))
                 )}
               </div>
               <div className="panel summary-card">
                 <div className="section-title">
-                  <span>Tendencias</span>
+                  <span>{uiText.home.trends}</span>
                 </div>
                 {summary.map((line) => (
                   <p key={line}>{line}</p>
