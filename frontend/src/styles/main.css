@@ -14,6 +14,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 button,
@@ -25,6 +26,7 @@ textarea {
 
 button {
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .loading-screen {
@@ -38,6 +40,7 @@ button {
 .auth-shell {
   display: grid;
   min-height: 100vh;
+  min-height: 100dvh;
   grid-template-columns: 1.1fr 0.9fr;
   gap: 32px;
   padding: 32px;
@@ -66,7 +69,7 @@ button {
 .auth-hero h1 {
   max-width: 760px;
   margin: 22px 0 16px;
-  font-size: clamp(2.5rem, 7vw, 6rem);
+  font-size: 5rem;
   line-height: 1;
 }
 
@@ -110,7 +113,7 @@ button {
   border-radius: 8px;
   background: #f8e8ef;
   color: #63344a;
-  min-height: 42px;
+  min-height: 46px;
 }
 
 .auth-tabs button.active,
@@ -135,6 +138,7 @@ textarea {
   border-radius: 8px;
   background: #ffffff;
   color: #334155;
+  min-height: 48px;
   padding: 12px 13px;
   outline: none;
 }
@@ -157,7 +161,7 @@ textarea:focus {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  min-height: 46px;
+  min-height: 48px;
   border: 0;
   border-radius: 8px;
   background: #e66f9e;
@@ -182,6 +186,7 @@ textarea:focus {
 .app-shell {
   display: grid;
   min-height: 100vh;
+  min-height: 100dvh;
   grid-template-columns: 240px 1fr;
   background:
     linear-gradient(180deg, #fff7fb 0%, #f1fbf6 100%);
@@ -207,6 +212,7 @@ textarea:focus {
 
 .nav-item {
   justify-content: flex-start;
+  min-width: 0;
   padding: 0 14px;
   font-weight: 800;
 }
@@ -219,6 +225,7 @@ textarea:focus {
   width: min(100%, 1220px);
   margin: 0 auto;
   padding: 28px;
+  min-width: 0;
 }
 
 .topbar {
@@ -238,7 +245,8 @@ textarea:focus {
 .topbar h1 {
   margin: 0;
   color: #4f2437;
-  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-size: 2.65rem;
+  line-height: 1.08;
 }
 
 .home-grid {
@@ -250,6 +258,7 @@ textarea:focus {
 
 .panel {
   padding: 20px;
+  min-width: 0;
 }
 
 .section-title {
@@ -276,7 +285,7 @@ textarea:focus {
 
 .emotion {
   display: grid;
-  min-height: 82px;
+  min-height: 86px;
   place-items: center;
   border: 1px solid #eadfe8;
   border-radius: 8px;
@@ -313,6 +322,7 @@ textarea:focus {
   border-radius: 8px;
   background: #ffffff;
   color: #6b3a4e;
+  min-height: 42px;
   padding: 9px 11px;
   font-weight: 700;
 }
@@ -370,12 +380,14 @@ textarea:focus {
 }
 
 .secondary-action {
+  min-height: 46px;
   padding: 0 14px;
   font-weight: 800;
 }
 
 .calendar-panel {
   max-width: 920px;
+  overflow: hidden;
 }
 
 .calendar-header {
@@ -388,17 +400,26 @@ textarea:focus {
 .calendar-header h2 {
   margin: 0;
   color: #4f2437;
+  font-size: 1.35rem;
   text-transform: capitalize;
 }
 
 .calendar-header button {
-  width: 42px;
+  width: 46px;
+  min-width: 46px;
+}
+
+.calendar-scroll {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 8px;
+  min-width: 0;
 }
 
 .weekday {
@@ -410,6 +431,7 @@ textarea:focus {
 .calendar-day {
   display: grid;
   min-height: 76px;
+  min-width: 0;
   border: 1px solid #eadfe8;
   border-radius: 8px;
   background: #ffffff;
@@ -473,6 +495,15 @@ textarea:focus {
   gap: 18px;
 }
 
+.chart-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.chart-card .recharts-responsive-container {
+  min-width: 0;
+}
+
 .metric-card {
   display: grid;
   gap: 8px;
@@ -507,12 +538,22 @@ textarea:focus {
   }
 
   .auth-shell {
+    align-content: center;
+    grid-auto-rows: auto;
     padding: 20px;
+  }
+
+  .auth-hero h1 {
+    font-size: 3.25rem;
   }
 
   .auth-hero {
     align-self: auto;
     padding: 24px 0 0;
+  }
+
+  .auth-card {
+    align-self: start;
   }
 
   .sidebar {
@@ -535,9 +576,101 @@ textarea:focus {
   .content {
     padding: 18px;
   }
+
+  .topbar h1 {
+    font-size: 2.2rem;
+  }
+}
+
+@media (min-width: 921px) and (max-width: 1100px) {
+  .auth-hero h1 {
+    font-size: 3.8rem;
+  }
 }
 
 @media (max-width: 640px) {
+  body {
+    min-width: 0;
+  }
+
+  .auth-shell {
+    align-content: start;
+    gap: 18px;
+    min-height: 100dvh;
+    padding: 16px;
+    background-position: center top;
+  }
+
+  .auth-hero {
+    padding: 10px 0 0;
+  }
+
+  .auth-hero h1 {
+    margin: 14px 0 10px;
+    font-size: 2.3rem;
+    line-height: 1.05;
+  }
+
+  .auth-hero p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  .auth-card {
+    width: 100%;
+    padding: 18px;
+  }
+
+  .app-shell {
+    display: block;
+    min-height: 100dvh;
+  }
+
+  .sidebar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    display: grid;
+    height: auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    border-top: 1px solid rgba(124, 63, 88, 0.14);
+    border-right: 0;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 -12px 30px rgba(124, 63, 88, 0.12);
+  }
+
+  .compact-brand {
+    display: none;
+  }
+
+  .nav-item,
+  .logout {
+    display: grid;
+    min-height: 56px;
+    justify-items: center;
+    gap: 3px;
+    margin: 0;
+    padding: 6px 4px;
+    font-size: 0.78rem;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .nav-item svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .content {
+    width: 100%;
+    padding: 16px 14px calc(92px + env(safe-area-inset-bottom));
+  }
+
   .topbar,
   .button-row {
     align-items: stretch;
@@ -546,6 +679,16 @@ textarea:focus {
 
   .topbar {
     display: grid;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .topbar p {
+    font-size: 0.95rem;
+  }
+
+  .topbar h1 {
+    font-size: 1.75rem;
   }
 
   .topbar .primary-action,
@@ -555,15 +698,165 @@ textarea:focus {
 
   .emotion-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .emotion {
+    min-height: 78px;
+    padding: 8px 4px;
+    font-size: 0.94rem;
   }
 
   .form-row,
-  .reminder-row {
+  .reminder-row,
+  .button-row {
     grid-template-columns: 1fr;
   }
 
+  .secondary-action {
+    width: 100%;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .section-title {
+    align-items: flex-start;
+    font-size: 1rem;
+  }
+
+  .section-title strong {
+    font-size: 1.65rem;
+  }
+
+  .chips {
+    gap: 7px;
+  }
+
+  .chip {
+    flex: 1 1 calc(50% - 7px);
+    min-width: 128px;
+    text-align: center;
+  }
+
+  .calendar-panel {
+    padding: 14px;
+  }
+
+  .calendar-header {
+    gap: 10px;
+  }
+
+  .calendar-header h2 {
+    font-size: 1.08rem;
+    text-align: center;
+  }
+
+  .calendar-grid {
+    gap: 5px;
+  }
+
+  .weekday {
+    font-size: 0.78rem;
+  }
+
   .calendar-day {
-    min-height: 58px;
+    min-height: 52px;
     padding: 6px;
+    font-size: 0.86rem;
+  }
+
+  .calendar-day strong {
+    font-size: 1rem;
+  }
+
+  .day-detail article {
+    padding: 12px;
+  }
+
+  .dashboard-grid {
+    gap: 14px;
+  }
+
+  .metric-card {
+    min-height: 96px;
+  }
+
+  .metric-card strong {
+    font-size: 2.25rem;
+  }
+
+  .chart-card {
+    padding: 14px 10px 12px;
+  }
+
+  .chart-card h2 {
+    margin-bottom: 12px;
+    padding: 0 4px;
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+}
+
+@media (max-width: 390px) {
+  .auth-shell {
+    padding: 12px;
+  }
+
+  .auth-hero h1 {
+    font-size: 2rem;
+  }
+
+  .content {
+    padding-inline: 10px;
+  }
+
+  .panel {
+    padding: 14px;
+  }
+
+  .topbar h1 {
+    font-size: 1.55rem;
+  }
+
+  .emotion {
+    min-height: 74px;
+  }
+
+  .chip {
+    min-width: 112px;
+  }
+
+  .calendar-panel {
+    padding: 12px 8px;
+  }
+
+  .calendar-grid {
+    gap: 4px;
+  }
+
+  .calendar-day {
+    min-height: 48px;
+    padding: 5px;
+  }
+
+  .nav-item,
+  .logout {
+    font-size: 0.72rem;
+  }
+}
+
+@media (min-width: 921px) and (max-width: 1100px) {
+  .app-shell {
+    grid-template-columns: 210px 1fr;
+  }
+
+  .content {
+    padding: 22px;
+  }
+
+  .home-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

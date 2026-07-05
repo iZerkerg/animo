@@ -48,22 +48,24 @@ export function CalendarView({ entries }: Props) {
         </button>
       </div>
 
-      <div className="calendar-grid">
-        {["L", "M", "M", "J", "V", "S", "D"].map((day) => (
-          <span className="weekday" key={day}>
-            {day}
-          </span>
-        ))}
-        {days.map((day) => {
-          const dominant = dominantEmotion(day);
-          const className = dominant ? `calendar-day has-entry ${emotionClass[dominant[0]] ?? ""}` : "calendar-day";
-          return (
-            <button className={className} key={day.toISOString()} type="button" onClick={() => setSelectedDate(day)}>
-              <span>{format(day, "d")}</span>
-              {dominant && <strong>{dominant[1].emoji}</strong>}
-            </button>
-          );
-        })}
+      <div className="calendar-scroll">
+        <div className="calendar-grid">
+          {["L", "M", "M", "J", "V", "S", "D"].map((day) => (
+            <span className="weekday" key={day}>
+              {day}
+            </span>
+          ))}
+          {days.map((day) => {
+            const dominant = dominantEmotion(day);
+            const className = dominant ? `calendar-day has-entry ${emotionClass[dominant[0]] ?? ""}` : "calendar-day";
+            return (
+              <button className={className} key={day.toISOString()} type="button" onClick={() => setSelectedDate(day)}>
+                <span>{format(day, "d")}</span>
+                {dominant && <strong>{dominant[1].emoji}</strong>}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="day-detail">

@@ -49,10 +49,10 @@ export function DashboardCharts({ entries }: Props) {
       <div className="panel chart-card wide">
         <h2>{uiText.dashboard.recentEvolution}</h2>
         <ResponsiveContainer width="100%" height={260}>
-          <LineChart data={evolution}>
+          <LineChart data={evolution} margin={{ top: 8, right: 12, bottom: 8, left: -16 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#eadfe8" />
-            <XAxis dataKey="date" />
-            <YAxis domain={[1, 5]} />
+            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+            <YAxis domain={[1, 5]} tick={{ fontSize: 12 }} />
             <Tooltip />
             <Line type="monotone" dataKey="score" stroke="#e66f9e" strokeWidth={3} dot={{ r: 5 }} />
           </LineChart>
@@ -62,10 +62,10 @@ export function DashboardCharts({ entries }: Props) {
       <div className="panel chart-card">
         <h2>{uiText.dashboard.frequentEmotions}</h2>
         <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={byEmotion}>
+          <BarChart data={byEmotion} margin={{ top: 8, right: 8, bottom: 8, left: -18 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#eadfe8" />
-            <XAxis dataKey="name" />
-            <YAxis allowDecimals={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} tickFormatter={shortLabel} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
             <Tooltip />
             <Bar dataKey="total" radius={[8, 8, 0, 0]}>
               {byEmotion.map((_, index) => (
@@ -80,7 +80,7 @@ export function DashboardCharts({ entries }: Props) {
         <h2>{uiText.dashboard.timeOfDay}</h2>
         <ResponsiveContainer width="100%" height={260}>
           <PieChart>
-            <Pie data={byTime} dataKey="total" nameKey="name" outerRadius={86} label>
+            <Pie data={byTime} dataKey="total" nameKey="name" outerRadius="76%" label>
               {byTime.map((_, index) => (
                 <Cell fill={colors[index % colors.length]} key={index} />
               ))}
@@ -93,10 +93,10 @@ export function DashboardCharts({ entries }: Props) {
       <div className="panel chart-card wide">
         <h2>{uiText.dashboard.emotionsByCategory}</h2>
         <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={byCategory}>
+          <BarChart data={byCategory} layout="vertical" margin={{ top: 8, right: 12, bottom: 8, left: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#eadfe8" />
-            <XAxis dataKey="name" />
-            <YAxis allowDecimals={false} />
+            <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
+            <YAxis dataKey="name" type="category" width={118} tick={{ fontSize: 11 }} tickFormatter={shortLabel} />
             <Tooltip />
             <Bar dataKey="total" fill="#9bd6c5" radius={[8, 8, 0, 0]} />
           </BarChart>
@@ -115,4 +115,8 @@ function groupCount<T>(items: T[], key: (item: T) => string) {
 function average(entries: MoodEntry[]) {
   if (!entries.length) return 0;
   return entries.reduce((sum, entry) => sum + (scoreByEmotion[entry.emotion] ?? 3), 0) / entries.length;
+}
+
+function shortLabel(value: string) {
+  return value.length > 14 ? `${value.slice(0, 13)}…` : value;
 }
