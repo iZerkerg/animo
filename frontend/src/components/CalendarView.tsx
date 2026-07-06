@@ -1,47 +1,48 @@
-import { addMonths, eachDayOfInterval, endOfMonth, format, startOfMonth, subMonths } from "date-fns";
+import { addMonths, eachDayOfInterval, endOfMonth, format, getDay, startOfMonth, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { timeOfDayLabels, uiText } from "../constants/text";
 import type { MoodEntry } from "../services/api";
 import { formatDateObjectShort, isSameCivilDay } from "../utils/date";
+import { getDominantEmotion, getEntryEmotions } from "../utils/emotions";
 
 type Props = {
   entries: MoodEntry[];
-};
-
-const emotionClass: Record<string, string> = {
-  Feliz: "happy",
-  Tranquila: "calm",
-  Motivada: "motivated",
-  Ansiosa: "anxious",
-  Triste: "sad",
-  Enojada: "angry",
-  Cansada: "tired",
-  Estresada: "stressed"
 };
 
 export function CalendarView({ entries }: Props) {
   const [month, setMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const days = useMemo(() => eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) }), [month]);
-  const selectedEntries = entries.filter((entry) => isSameCivilDay(entry.date, selectedDate));
+  const calendarDays = useMemo(() => {
+    const monthStart = startOfMonth(month);
+    const leadingEmptyDays = (getDay(monthStart) + 6) % 7;
+    return {
+      leadingEmptyDays,
+      days: eachDayOfInterval({ start: monthStart, end: endOfMonth(month) })
+    };
+  }, [month]);
 
-  function dominantEmotion(day: Date) {
-    const dayEntries = entries.filter((entry) => isSameCivilDay(entry.date, day));
-    const counts = new Map<string, { total: number; emoji: string; intensity: number }>();
-    dayEntries.forEach((entry) => {
-      getEntryEmotions(entry).forEach((item) => {
-        const current = counts.get(item.emotion);
-        counts.set(item.emotion, {
-          total: (current?.total ?? 0) + 1,
-          emoji: item.emoji,
-          intensity: (current?.intensity ?? 0) + (item.intensity ?? 0)
-        });
-      });
+  const entriesByDay = useMemo(() => {
+    const map = new Map<string, MoodEntry[]>();
+    entries.forEach((entry) => {
+      const key = format(new Date(entry.date), "yyyy-MM-dd");
+      map.set(key, [...(map.get(key) ?? []), entry]);
     });
-    return [...counts.entries()].sort((a, b) => b[1].total - a[1].total || b[1].intensity - a[1].intensity)[0];
+    return map;
+  }, [entries]);
+
+  const selectedEntries = useMemo(
+    () =>
+      entries
+        .filter((entry) => isSameCivilDay(entry.date, selectedDate))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [entries, selectedDate]
+  );
+
+  function getDayEntries(day: Date) {
+    return entriesByDay.get(format(day, "yyyy-MM-dd")) ?? [];
   }
 
   return (
@@ -56,52 +57,78 @@ export function CalendarView({ entries }: Props) {
         </button>
       </div>
 
-      <div className="calendar-scroll">
-        <div className="calendar-grid">
-          {["L", "M", "M", "J", "V", "S", "D"].map((day) => (
-            <span className="weekday" key={day}>
-              {day}
-            </span>
-          ))}
-          {days.map((day) => {
-            const dominant = dominantEmotion(day);
-            const className = dominant ? `calendar-day has-entry ${emotionClass[dominant[0]] ?? ""}` : "calendar-day";
-            return (
-              <button className={className} key={day.toISOString()} type="button" onClick={() => setSelectedDate(day)}>
-                <span>{format(day, "d")}</span>
-                {dominant && <strong>{dominant[1].emoji}</strong>}
-              </button>
-            );
-          })}
-        </div>
+      <div className="calendar-grid" aria-label="Calendario emocional mensual">
+        {["L", "M", "M", "J", "V", "S", "D"].map((day, index) => (
+          <span className="weekday" key={`${day}-${index}`}>
+            {day}
+          </span>
+        ))}
+        {Array.from({ length: calendarDays.leadingEmptyDays }).map((_, index) => (
+          <span className="calendar-day calendar-day-empty" aria-hidden="true" key={`empty-${index}`} />
+        ))}
+        {calendarDays.days.map((day) => {
+          const dayEntries = getDayEntries(day);
+          const dominant = getDominantEmotion(dayEntries);
+          const isSelected =
+            day.getFullYear() === selectedDate.getFullYear() &&
+            day.getMonth() === selectedDate.getMonth() &&
+            day.getDate() === selectedDate.getDate();
+          const className = [
+            "calendar-day",
+            dominant ? "has-entry" : "",
+            dominant?.className ?? "",
+            isSelected ? "selected" : ""
+          ].filter(Boolean).join(" ");
+
+          return (
+            <button
+              aria-label={`${formatDateObjectShort(day)}${dominant ? `, predomina ${dominant.emotion}` : ""}`}
+              className={className}
+              key={day.toISOString()}
+              type="button"
+              onClick={() => setSelectedDate(day)}
+            >
+              <span>{format(day, "d")}</span>
+              {dominant && (
+                <strong title={`Predomina ${dominant.emotion}`}>
+                  {dominant.emoji}
+                  <small>{dominant.count}</small>
+                </strong>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <div className="day-detail">
         <h3>{formatDateObjectShort(selectedDate)}</h3>
         {selectedEntries.length === 0 ? (
-          <p>{uiText.calendar.noEntries}</p>
+          <p className="empty-state">{uiText.calendar.noEntries}</p>
         ) : (
           selectedEntries.map((entry) => (
             <article key={entry.id}>
-              <strong>
-                {formatEntryEmotions(entry)}
-              </strong>
-              <span>{timeOfDayLabels[entry.timeOfDay]}</span>
+              <div className="entry-detail-header">
+                <strong>{timeOfDayLabels[entry.timeOfDay]}</strong>
+                <span>{format(new Date(entry.createdAt), "HH:mm")}</span>
+              </div>
+              <div className="emotion-pills">
+                {getEntryEmotions(entry).map((item) => (
+                  <span className="emotion-pill" key={`${entry.id}-${item.emotion}`}>
+                    {item.emoji} {item.emotion}
+                    <small>{item.intensity ?? 3}/5</small>
+                  </span>
+                ))}
+              </div>
               <p>{entry.note || uiText.home.noNote}</p>
+              <div className="category-list">
+                {entry.categories.length ? entry.categories.map((category) => (
+                  <span key={category.id}>{category.name}</span>
+                )) : <span>{uiText.calendar.noCategories}</span>}
+              </div>
             </article>
           ))
         )}
       </div>
     </div>
   );
-}
-
-function getEntryEmotions(entry: MoodEntry) {
-  return entry.emotions?.length ? entry.emotions : [{ emotion: entry.emotion, emoji: entry.emoji, intensity: null }];
-}
-
-function formatEntryEmotions(entry: MoodEntry) {
-  return getEntryEmotions(entry)
-    .map((item) => `${item.emoji} ${item.emotion}${item.intensity ? ` ${item.intensity}/5` : ""}`)
-    .join(" · ");
 }

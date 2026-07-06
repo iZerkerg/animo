@@ -15,7 +15,7 @@ const options: Array<{ value: ThemeMode; label: string; icon: typeof Sun }> = [
 
 export function ThemeToggle({ mode, onChange, compact = false }: Props) {
   return (
-    <div className={compact ? "theme-toggle compact-toggle" : "theme-toggle"} aria-label="Selector de tema">
+    <div className={compact ? "theme-toggle compact-toggle" : "theme-toggle"} aria-label="Selector de modo oscuro">
       {options.map((option) => {
         const Icon = option.icon;
         return (
@@ -24,7 +24,7 @@ export function ThemeToggle({ mode, onChange, compact = false }: Props) {
             className={mode === option.value ? "theme-option active" : "theme-option"}
             key={option.value}
             onClick={() => onChange(option.value)}
-            title={`Tema ${option.label.toLowerCase()}`}
+            title={`Modo ${option.label.toLowerCase()}`}
             type="button"
           >
             <Icon size={16} />

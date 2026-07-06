@@ -5,8 +5,10 @@ export const uiText = {
   nav: {
     diary: "Diario",
     calendar: "Calendario",
-    charts: "Gráficos",
+    newMood: "Registrar",
+    charts: "Análisis",
     profile: "Perfil",
+    settings: "Configuración",
     logout: "Salir"
   },
   auth: {
@@ -38,7 +40,7 @@ export const uiText = {
   },
   home: {
     greeting: "Hola",
-    title: "¿Cómo se siente tu día?",
+    title: "¿Cómo te sientes hoy?",
     quickMood: "Registrar ánimo",
     todaySummary: "Resumen de hoy",
     noEntriesToday: "Hoy todavía no registras tu ánimo.",
@@ -61,14 +63,33 @@ export const uiText = {
     createdAt: "Cuenta creada",
     edit: "Editar perfil",
     editTitle: "Editar perfil",
+    settings: "Configuración",
     cancel: "Cancelar",
     save: "Guardar cambios",
     saving: "Guardando cambios...",
     saved: "Perfil actualizado.",
     logout: "Cerrar sesión"
   },
+  settings: {
+    title: "Configuración",
+    subtitle: "Ajusta cómo se ve y se siente tu diario.",
+    visual: "Visual",
+    themes: "Temas",
+    themesDescription: "Elige la paleta que acompaña tu espacio.",
+    appearance: "Modo oscuro",
+    appearanceDescription: "Define si la app usa claro, oscuro o sigue tu sistema.",
+    backToProfile: "Volver al perfil",
+    colorThemes: {
+      rose: "Rosa",
+      red: "Rojo",
+      blue: "Azul",
+      green: "Verde",
+      sun: "Sol"
+    }
+  },
   moodForm: {
     title: "Registro rápido",
+    subtitle: "Elige cómo te sientes, ajusta la intensidad y guarda este momento.",
     selected: "Emociones seleccionadas",
     intensity: "Intensidad",
     chooseEmotion: "Elige al menos una emoción.",
@@ -77,18 +98,46 @@ export const uiText = {
     note: "Nota",
     notePlaceholder: "¿Qué pasó? ¿Qué necesitas recordar?",
     saving: "Guardando...",
-    save: "Guardar registro"
+    save: "Guardar registro",
+    saved: "Registro guardado."
   },
   calendar: {
     previousMonth: "Mes anterior",
     nextMonth: "Mes siguiente",
-    noEntries: "No hay registros este día."
+    noEntries: "No hay registros para este día.",
+    noCategories: "Sin categorías"
   },
   dashboard: {
-    weeklyAverage: "Promedio semanal",
-    monthlyAverage: "Promedio mensual",
+    title: "Análisis",
+    period: "Periodo de análisis",
+    timeRange: "Temporalidad",
+    viewing: "Estás viendo: {period}",
+    startDate: "Fecha inicio",
+    endDate: "Fecha fin",
+    invalidRange: "La fecha de inicio no puede ser posterior a la fecha fin.",
+    recordAnalyzed: "registro analizado",
+    recordsAnalyzed: "registros analizados",
+    emotionAnalyzed: "emoción analizada",
+    emotionsAnalyzed: "emociones analizadas",
+    totalEmotionEvents: "Emociones registradas",
+    totalEmotionEventsHint: "Suma de emociones seleccionadas.",
+    recordsCount: "Registros analizados",
+    recordsCountHint: "Entradas guardadas en el periodo.",
+    wellbeingIndex: "Índice de bienestar",
+    wellbeingShortHint: "Basado en tipo de emoción e intensidad.",
+    wellbeingScaleHint: "0 indica días más difíciles, 100 indica días más positivos.",
+    topEmotion: "Emoción más frecuente",
+    moodTrend: "Evolución del estado de ánimo",
+    moodTrendHint: "Este gráfico resume si en cada día predominaron emociones positivas o negativas, considerando la intensidad de cada emoción.",
+    moodTrendScaleHint: "0 representa equilibrio. Valores positivos indican predominio de emociones positivas y valores negativos predominio de emociones negativas.",
     recentEvolution: "Evolución reciente",
     frequentEmotions: "Emociones frecuentes",
+    frequencyHint: "Cada emoción seleccionada cuenta como una ocurrencia.",
+    wellbeingTooltip: "Este índice resume la tendencia general del día considerando tipo de emoción e intensidad.",
+    noFrequencyData: "No hay emociones registradas en este periodo.",
+    singleDayEvolutionHint: "Para ver una tendencia, selecciona un periodo de varios días o registra más momentos del día.",
+    notEnoughEvolutionData: "No hay registros suficientes para este periodo. Prueba seleccionando una temporalidad más amplia.",
+    noDataForDay: "Sin registros ese día",
     timeOfDay: "Momento del día",
     emotionsByCategory: "Emociones por categoría"
   },

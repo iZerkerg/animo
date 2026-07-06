@@ -2,19 +2,15 @@ import { Heart } from "lucide-react";
 import { useState } from "react";
 import { LoadingButton } from "../components/LoadingButton";
 import { PasswordInput } from "../components/PasswordInput";
-import { ThemeToggle } from "../components/ThemeToggle";
 import { uiText } from "../constants/text";
-import type { ThemeMode } from "../hooks/useTheme";
 import { api } from "../services/api";
 
 type Props = {
   token: string | null;
   onBackToLogin: () => void;
-  themeMode: ThemeMode;
-  onThemeChange: (mode: ThemeMode) => void;
 };
 
-export function ResetPasswordPage({ onBackToLogin, onThemeChange, themeMode, token }: Props) {
+export function ResetPasswordPage({ onBackToLogin, token }: Props) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -52,7 +48,6 @@ export function ResetPasswordPage({ onBackToLogin, onThemeChange, themeMode, tok
           <div className="brand-mark">
             <Heart size={24} /> {uiText.brand}
           </div>
-          <ThemeToggle compact mode={themeMode} onChange={onThemeChange} />
         </div>
         <h1>{uiText.auth.resetTitle}</h1>
         <p>{uiText.auth.resetSubtitle}</p>

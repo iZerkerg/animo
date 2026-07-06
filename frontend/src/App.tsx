@@ -46,8 +46,10 @@ export function App() {
   if (user) {
     return (
       <AppPage
+        colorTheme={theme.colorTheme}
         themeMode={theme.mode}
         user={user}
+        onColorThemeChange={theme.setColorTheme}
         onLogout={() => setUser(null)}
         onThemeChange={theme.setMode}
         onUserUpdated={setUser}
@@ -58,9 +60,7 @@ export function App() {
   if (authRoute === "forgot-password") {
     return (
       <ForgotPasswordPage
-        themeMode={theme.mode}
         onBackToLogin={() => navigateAuth("/")}
-        onThemeChange={theme.setMode}
       />
     );
   }
@@ -69,20 +69,16 @@ export function App() {
     const token = new URLSearchParams(window.location.search).get("token");
     return (
       <ResetPasswordPage
-        themeMode={theme.mode}
         token={token}
         onBackToLogin={() => navigateAuth("/")}
-        onThemeChange={theme.setMode}
       />
     );
   }
 
   return (
     <AuthPage
-      themeMode={theme.mode}
       onAuthenticated={setUser}
       onForgotPassword={() => navigateAuth("/forgot-password")}
-      onThemeChange={theme.setMode}
     />
   );
 }

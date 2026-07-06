@@ -1,29 +1,34 @@
-import { CalendarDays, ChartNoAxesColumnIncreasing, PenLine, UserCircle } from "lucide-react";
+import { CalendarDays, ChartNoAxesColumnIncreasing, PenLine, Plus, UserCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarView } from "../components/CalendarView";
 import { DashboardCharts } from "../components/DashboardCharts";
-import { MoodForm } from "../components/MoodForm";
 import { ReminderSettings } from "../components/ReminderSettings";
-import { ThemeToggle } from "../components/ThemeToggle";
 import { uiText } from "../constants/text";
-import type { ThemeMode } from "../hooks/useTheme";
+import type { ColorTheme, ThemeMode } from "../hooks/useTheme";
+import { NewMoodPage } from "./NewMoodPage";
 import { ProfilePage } from "./ProfilePage";
+import { SettingsPage } from "./SettingsPage";
 import { api, clearToken, type Category, type MoodEntry, type User } from "../services/api";
 import { isBirthdayToday, isSameCivilDay } from "../utils/date";
 
+type AppView = "home" | "calendar" | "newMood" | "stats" | "profile" | "settings";
+
 type Props = {
+  colorTheme: ColorTheme;
   user: User;
   onLogout: () => void;
+  onColorThemeChange: (theme: ColorTheme) => void;
   onUserUpdated: (user: User) => void;
   themeMode: ThemeMode;
   onThemeChange: (mode: ThemeMode) => void;
 };
 
-export function AppPage({ user, onLogout, onThemeChange, onUserUpdated, themeMode }: Props) {
+export function AppPage({ colorTheme, user, onColorThemeChange, onLogout, onThemeChange, onUserUpdated, themeMode }: Props) {
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [summary, setSummary] = useState<string[]>([]);
-  const [activeView, setActiveView] = useState<"home" | "calendar" | "stats" | "profile">("home");
+  const [activeView, setActiveView] = useState<AppView>(() => getViewFromPath());
+  const [homeMessage, setHomeMessage] = useState("");
 
   async function refresh() {
     const [moodsData, categoriesData, statsData] = await Promise.all([api.moods(), api.categories(), api.stats()]);
@@ -36,6 +41,12 @@ export function AppPage({ user, onLogout, onThemeChange, onUserUpdated, themeMod
     refresh();
   }, []);
 
+  useEffect(() => {
+    const handlePopState = () => setActiveView(getViewFromPath());
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const todayEntries = useMemo(() => {
     const today = new Date();
     return entries.filter((entry) => isSameCivilDay(entry.date, today));
@@ -46,42 +57,75 @@ export function AppPage({ user, onLogout, onThemeChange, onUserUpdated, themeMod
     onLogout();
   }
 
+  function navigate(view: AppView) {
+    if (view !== "home") setHomeMessage("");
+    setActiveView(view);
+    const nextPath = getPathForView(view);
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, "", nextPath);
+    }
+  }
+
+  const title =
+    activeView === "profile"
+      ? uiText.profile.title
+      : activeView === "settings"
+        ? uiText.settings.title
+        : activeView === "newMood"
+          ? uiText.moodForm.title
+          : activeView === "stats"
+            ? uiText.dashboard.title
+            : uiText.home.title;
+
+  async function handleMoodCreated() {
+    await refresh();
+    setHomeMessage(uiText.moodForm.saved);
+    navigate("home");
+  }
+
   return (
     <main className="app-shell">
       <aside className="sidebar">
         <div className="brand-mark compact-brand">{uiText.brand}</div>
-        <button className={activeView === "home" ? "nav-item active" : "nav-item"} onClick={() => setActiveView("home")}>
+        <button className={activeView === "home" ? "nav-item active" : "nav-item"} onClick={() => navigate("home")}>
           <PenLine size={18} /> {uiText.nav.diary}
         </button>
-        <button className={activeView === "calendar" ? "nav-item active" : "nav-item"} onClick={() => setActiveView("calendar")}>
+        <button className={activeView === "calendar" ? "nav-item active" : "nav-item"} onClick={() => navigate("calendar")}>
           <CalendarDays size={18} /> {uiText.nav.calendar}
         </button>
-        <button className={activeView === "stats" ? "nav-item active" : "nav-item"} onClick={() => setActiveView("stats")}>
+        <button
+          aria-label="Registrar estado de ánimo"
+          className={activeView === "newMood" ? "nav-item new-mood-nav active" : "nav-item new-mood-nav"}
+          onClick={() => navigate("newMood")}
+        >
+          <Plus size={22} />
+          <span>{uiText.nav.newMood}</span>
+        </button>
+        <button className={activeView === "stats" ? "nav-item active" : "nav-item"} onClick={() => navigate("stats")}>
           <ChartNoAxesColumnIncreasing size={18} /> {uiText.nav.charts}
         </button>
-        <button className={activeView === "profile" ? "nav-item active" : "nav-item"} onClick={() => setActiveView("profile")}>
+        <button className={activeView === "profile" || activeView === "settings" ? "nav-item active" : "nav-item"} onClick={() => navigate("profile")}>
           <UserCircle size={18} /> {uiText.nav.profile}
         </button>
       </aside>
 
       <section className="content">
-        <header className="topbar">
-          <div>
-            <p>{uiText.home.greeting}, {user.name}</p>
-            <h1>{activeView === "profile" ? uiText.profile.title : uiText.home.title}</h1>
-          </div>
-          <div className="topbar-actions">
-            <ThemeToggle compact mode={themeMode} onChange={onThemeChange} />
-            <button className="primary-action compact" onClick={() => setActiveView("home")}>
-              {uiText.home.quickMood}
-            </button>
-          </div>
-        </header>
+        {activeView !== "home" && (
+          <header className="topbar">
+            <div>
+              <h1>{title}</h1>
+            </div>
+          </header>
+        )}
 
         {activeView === "home" && (
-          <div className="home-grid">
-            <MoodForm categories={categories} onCreated={refresh} />
+          <div className="home-dashboard">
+            <header className="home-header">
+              <p className="home-greeting">{uiText.home.greeting}, {user.name}</p>
+              <h1>{uiText.home.title}</h1>
+            </header>
             <div className="stack">
+              {homeMessage && <p className="success-text">{homeMessage}</p>}
               {isBirthdayToday(user.birthDate) && (
                 <div className="panel birthday-card">
                   <p>{uiText.home.birthday.replace("{name}", user.name)}</p>
@@ -119,11 +163,39 @@ export function AppPage({ user, onLogout, onThemeChange, onUserUpdated, themeMod
         )}
 
         {activeView === "calendar" && <CalendarView entries={entries} />}
+        {activeView === "newMood" && <NewMoodPage categories={categories} onCreated={handleMoodCreated} />}
         {activeView === "stats" && <DashboardCharts entries={entries} />}
-        {activeView === "profile" && <ProfilePage user={user} onLogout={logout} onUserUpdated={onUserUpdated} />}
+        {activeView === "profile" && (
+          <ProfilePage user={user} onLogout={logout} onOpenSettings={() => navigate("settings")} onUserUpdated={onUserUpdated} />
+        )}
+        {activeView === "settings" && (
+          <SettingsPage
+            colorTheme={colorTheme}
+            themeMode={themeMode}
+            onBackToProfile={() => navigate("profile")}
+            onColorThemeChange={onColorThemeChange}
+            onThemeChange={onThemeChange}
+          />
+        )}
       </section>
     </main>
   );
+}
+
+function getViewFromPath(): AppView {
+  if (window.location.pathname === "/calendar") return "calendar";
+  if (window.location.pathname === "/stats") return "stats";
+  if (window.location.pathname === "/settings") return "settings";
+  if (window.location.pathname === "/mood/new") return "newMood";
+  return "home";
+}
+
+function getPathForView(view: AppView) {
+  if (view === "calendar") return "/calendar";
+  if (view === "stats") return "/stats";
+  if (view === "settings") return "/settings";
+  if (view === "newMood") return "/mood/new";
+  return "/";
 }
 
 function formatEntryEmotions(entry: MoodEntry) {

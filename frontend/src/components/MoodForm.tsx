@@ -12,7 +12,7 @@ const timeOptions: Array<{ value: TimeOfDay; label: string }> = [
 
 type Props = {
   categories: Category[];
-  onCreated: () => void;
+  onCreated: () => void | Promise<void>;
 };
 
 export function MoodForm({ categories, onCreated }: Props) {
@@ -44,7 +44,7 @@ export function MoodForm({ categories, onCreated }: Props) {
       setNote("");
       setCategoryIds([]);
       setSelectedEmotions([{ emotion: emotions[0].emotion, emoji: emotions[0].emoji, intensity: 3 }]);
-      onCreated();
+      await onCreated();
     } finally {
       setSaving(false);
     }

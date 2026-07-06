@@ -4,7 +4,7 @@ import multer from "multer";
 import { z } from "zod";
 import { prisma } from "../config/prisma.js";
 import { env } from "../config/env.js";
-import { supabase } from "../config/supabase.js";
+import { getSupabase } from "../config/supabase.js";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 
 export const userRouter = Router();
@@ -85,6 +85,13 @@ userRouter.post("/me/profile-image", requireAuth, (req: AuthRequest, res) => {
 
     const extension = getImageExtension(file.mimetype);
     const objectPath = `${req.user!.id}/${crypto.randomUUID()}.${extension}`;
+    let supabase: ReturnType<typeof getSupabase>;
+
+    try {
+      supabase = getSupabase();
+    } catch {
+      return res.status(500).json({ message: "Supabase Storage no está configurado en el backend" });
+    }
 
     const { error: storageError } = await supabase.storage.from(env.SUPABASE_STORAGE_BUCKET).upload(objectPath, file.buffer, {
       cacheControl: "3600",

@@ -2,19 +2,15 @@ import { Heart } from "lucide-react";
 import { useState } from "react";
 import { LoadingButton } from "../components/LoadingButton";
 import { PasswordInput } from "../components/PasswordInput";
-import { ThemeToggle } from "../components/ThemeToggle";
 import { uiText } from "../constants/text";
-import type { ThemeMode } from "../hooks/useTheme";
 import { api, setToken, type User } from "../services/api";
 
 type Props = {
   onAuthenticated: (user: User) => void;
   onForgotPassword: () => void;
-  themeMode: ThemeMode;
-  onThemeChange: (mode: ThemeMode) => void;
 };
 
-export function AuthPage({ onAuthenticated, onForgotPassword, onThemeChange, themeMode }: Props) {
+export function AuthPage({ onAuthenticated, onForgotPassword }: Props) {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -46,7 +42,6 @@ export function AuthPage({ onAuthenticated, onForgotPassword, onThemeChange, the
           <div className="brand-mark">
             <Heart size={24} /> {uiText.brand}
           </div>
-          <ThemeToggle compact mode={themeMode} onChange={onThemeChange} />
         </div>
         <h1>{uiText.auth.headline}</h1>
         <p>{uiText.auth.subtitle}</p>

@@ -10,7 +10,25 @@ import { userRouter } from "./routes/user.routes.js";
 
 export const app = express();
 
-app.use(cors({ origin: env.FRONTEND_URL }));
+const defaultCorsOrigins = ["http://localhost:5173", "https://animo-frontend.vercel.app"];
+const allowedCorsOrigins = new Set([
+  ...defaultCorsOrigins,
+  env.FRONTEND_URL,
+  ...(env.CORS_ORIGINS?.split(",").map((origin) => origin.trim()).filter(Boolean) ?? [])
+]);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedCorsOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Origen no permitido por CORS"));
+    }
+  })
+);
 app.use(express.json());
 app.use(morgan("dev"));
 

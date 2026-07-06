@@ -1,135 +1,193 @@
-import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { timeOfDayLabels, uiText } from "../constants/text";
+import { useMemo, useState } from "react";
+import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { uiText } from "../constants/text";
 import type { MoodEntry } from "../services/api";
-import { formatCivilDateShort } from "../utils/date";
+import { getEmotionEvents } from "../utils/emotions";
+import {
+  buildEmotionFrequency,
+  buildMoodTrend,
+  filterEntriesByRange,
+  formatAnalysisRangeLabel,
+  getDefaultCustomRange,
+  getTimeRangeLabel,
+  moodScoreToWellbeingIndex,
+  resolveDateRange,
+  timeRangeOptions,
+  type TimeRangePreset
+} from "../utils/stats";
 
 type Props = {
   entries: MoodEntry[];
 };
 
-const scoreByEmotion: Record<string, number> = {
-  Feliz: 5,
-  Tranquila: 4,
-  Motivada: 5,
-  Cansada: 2,
-  Ansiosa: 2,
-  Estresada: 2,
-  Triste: 1,
-  Enojada: 1
-};
-
-const colors = ["var(--primary)", "var(--chart-secondary)", "#f9d46b", "#a7c7e7", "#cdb4db", "#ffb4a2"];
+const colors = [
+  "var(--chart-primary)",
+  "var(--chart-secondary)",
+  "var(--chart-tertiary)",
+  "var(--chart-quaternary)",
+  "var(--chart-quinary)",
+  "var(--chart-senary)"
+];
 
 export function DashboardCharts({ entries }: Props) {
-  const emotionEvents = entries.flatMap((entry) =>
-    getEntryEmotions(entry).map((emotion) => ({ ...emotion, entry }))
-  );
-  const byEmotion = groupCount(emotionEvents, (item) => item.emotion);
-  const byTime = groupCount(emotionEvents, (item) => timeOfDayLabels[item.entry.timeOfDay]);
-  const byCategory = groupCount(
-    emotionEvents.flatMap((item) => item.entry.categories.map((category) => ({ name: category.name, emotion: item.emotion }))),
-    (item) => `${item.name} - ${item.emotion}`
-  ).slice(0, 8);
-  const evolution = entries.slice(-14).map((entry) => ({
-    date: formatCivilDateShort(entry.date).slice(0, 5),
-    score: entryScore(entry),
-    emotion: getEntryEmotions(entry).map((item) => item.emotion).join(", ")
-  }));
+  const defaultCustomRange = useMemo(() => getDefaultCustomRange(), []);
+  const [rangePreset, setRangePreset] = useState<TimeRangePreset>("1w");
+  const [customStart, setCustomStart] = useState(defaultCustomRange.start);
+  const [customEnd, setCustomEnd] = useState(defaultCustomRange.end);
 
-  const weeklyAverage = average(entries.slice(-7));
-  const monthlyAverage = average(entries.slice(-30));
+  const range = useMemo(() => resolveDateRange(rangePreset, customStart, customEnd), [customEnd, customStart, rangePreset]);
+  const rangeError = rangePreset === "custom" && !range ? uiText.dashboard.invalidRange : "";
+  const filteredEntries = useMemo(() => filterEntriesByRange(entries, range), [entries, range]);
+  const emotionEvents = useMemo(() => getEmotionEvents(filteredEntries), [filteredEntries]);
+  const frequency = useMemo(() => buildEmotionFrequency(filteredEntries), [filteredEntries]);
+  const isSingleDayRange = rangePreset === "1d";
+  const moodTrend = useMemo(() => buildMoodTrend(filteredEntries, range, isSingleDayRange), [filteredEntries, isSingleDayRange, range]);
+  const trendPointsWithData = moodTrend.filter((item) => item.score !== null).length;
+  const hasEnoughTrendData = trendPointsWithData >= 2;
+  const topEmotion = frequency[0];
+  const maxFrequencyTotal = topEmotion?.total ?? 0;
+  const averageMoodScore = moodTrend
+    .filter((item) => item.score !== null)
+    .reduce((sum, item, _, source) => sum + (item.score ?? 0) / source.length, 0);
+  const wellbeingIndex = moodScoreToWellbeingIndex(trendPointsWithData ? averageMoodScore : null);
 
   return (
     <div className="dashboard-grid">
+      <div className="panel chart-card wide controls-card analysis-period-card">
+        <div className="chart-heading-row">
+          <div>
+            <h2>{uiText.dashboard.period}</h2>
+            <p>{uiText.dashboard.viewing.replace("{period}", getTimeRangeLabel(rangePreset))}</p>
+          </div>
+          <label className="range-select">
+            <span>{uiText.dashboard.timeRange}</span>
+            <select value={rangePreset} onChange={(event) => setRangePreset(event.target.value as TimeRangePreset)}>
+              {timeRangeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {rangePreset === "custom" && (
+          <div className="custom-range">
+            <label>
+              {uiText.dashboard.startDate}
+              <input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} />
+            </label>
+            <label>
+              {uiText.dashboard.endDate}
+              <input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} />
+            </label>
+          </div>
+        )}
+        {rangeError && <p className="error-text">{rangeError}</p>}
+        <div className="analysis-period-facts">
+          <span>{formatAnalysisRangeLabel(range)}</span>
+          <span>{filteredEntries.length} {filteredEntries.length === 1 ? uiText.dashboard.recordAnalyzed : uiText.dashboard.recordsAnalyzed}</span>
+          <span>{emotionEvents.length} {emotionEvents.length === 1 ? uiText.dashboard.emotionAnalyzed : uiText.dashboard.emotionsAnalyzed}</span>
+        </div>
+      </div>
+
       <div className="panel metric-card">
-        <span>{uiText.dashboard.weeklyAverage}</span>
-        <strong>{weeklyAverage.toFixed(1)}</strong>
+        <span>{uiText.dashboard.totalEmotionEvents}</span>
+        <strong>{emotionEvents.length}</strong>
+        <small>{uiText.dashboard.totalEmotionEventsHint}</small>
       </div>
       <div className="panel metric-card">
-        <span>{uiText.dashboard.monthlyAverage}</span>
-        <strong>{monthlyAverage.toFixed(1)}</strong>
+        <span>{uiText.dashboard.recordsCount}</span>
+        <strong>{filteredEntries.length}</strong>
+        <small>{uiText.dashboard.recordsCountHint}</small>
+      </div>
+      <div className="panel metric-card">
+        <span>{uiText.dashboard.wellbeingIndex}</span>
+        <strong>{wellbeingIndex !== null ? `${wellbeingIndex}/100` : "-"}</strong>
+        <small>{uiText.dashboard.wellbeingShortHint}</small>
+      </div>
+      <div className="panel metric-card">
+        <span>{uiText.dashboard.topEmotion}</span>
+        <strong>{topEmotion ? `${topEmotion.emoji} ${topEmotion.name}` : "-"}</strong>
+        <small>{topEmotion ? topEmotion.label : uiText.dashboard.noFrequencyData}</small>
       </div>
 
       <div className="panel chart-card wide">
-        <h2>{uiText.dashboard.recentEvolution}</h2>
-        <ResponsiveContainer width="100%" height={260}>
-          <LineChart data={evolution} margin={{ top: 8, right: 12, bottom: 8, left: -16 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
-            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-            <YAxis domain={[1, 5]} tick={{ fontSize: 12 }} />
-            <Tooltip />
-            <Line type="monotone" dataKey="score" stroke="var(--chart-primary)" strokeWidth={3} dot={{ r: 5 }} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="panel chart-card">
-        <h2>{uiText.dashboard.frequentEmotions}</h2>
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={byEmotion} margin={{ top: 8, right: 8, bottom: 8, left: -18 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
-            <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} tickFormatter={shortLabel} />
-            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-            <Tooltip />
-            <Bar dataKey="total" radius={[8, 8, 0, 0]}>
-              {byEmotion.map((_, index) => (
-                <Cell fill={colors[index % colors.length]} key={index} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="panel chart-card">
-        <h2>{uiText.dashboard.timeOfDay}</h2>
-        <ResponsiveContainer width="100%" height={260}>
-          <PieChart>
-            <Pie data={byTime} dataKey="total" nameKey="name" outerRadius="76%" label>
-              {byTime.map((_, index) => (
-                <Cell fill={colors[index % colors.length]} key={index} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
+        <div className="chart-heading-row">
+          <div>
+            <h2>{uiText.dashboard.frequentEmotions}</h2>
+            <p>{uiText.dashboard.frequencyHint}</p>
+          </div>
+        </div>
+        {frequency.length === 0 ? (
+          <p className="empty-state">{uiText.dashboard.noFrequencyData}</p>
+        ) : (
+          <div className="emotion-ranking">
+            {frequency.map((item, index) => {
+              const visualWidth = maxFrequencyTotal ? Math.max(10, Math.round((item.total / maxFrequencyTotal) * 100)) : 0;
+              return (
+                <article className="emotion-rank-row" key={item.name}>
+                  <div className="emotion-rank-label">
+                    <span>{item.emoji}</span>
+                    <strong>{item.name}</strong>
+                  </div>
+                  <div className="emotion-rank-track" aria-hidden="true">
+                    <span style={{ width: `${visualWidth}%`, background: colors[index % colors.length] }} />
+                  </div>
+                  <strong className="emotion-rank-value">{item.label}</strong>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="panel chart-card wide">
-        <h2>{uiText.dashboard.emotionsByCategory}</h2>
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={byCategory} layout="vertical" margin={{ top: 8, right: 12, bottom: 8, left: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
-            <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
-            <YAxis dataKey="name" type="category" width={118} tick={{ fontSize: 11 }} tickFormatter={shortLabel} />
-            <Tooltip />
-            <Bar dataKey="total" fill="var(--chart-secondary)" radius={[8, 8, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="chart-heading-row">
+          <div>
+            <h2>{uiText.dashboard.moodTrend}</h2>
+            <p>{uiText.dashboard.moodTrendHint}</p>
+            <p>{uiText.dashboard.moodTrendScaleHint}</p>
+          </div>
+        </div>
+        {!hasEnoughTrendData ? (
+          <p className="empty-state">{isSingleDayRange ? uiText.dashboard.singleDayEvolutionHint : uiText.dashboard.notEnoughEvolutionData}</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={270}>
+            <LineChart data={moodTrend} margin={{ top: 8, right: 14, bottom: 8, left: -12 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
+              <XAxis dataKey="label" tick={{ fontSize: 12 }} interval="preserveStartEnd" />
+              <YAxis domain={[-5, 5]} ticks={[-5, -2.5, 0, 2.5, 5]} tick={{ fontSize: 12 }} />
+              <ReferenceLine y={0} stroke="var(--muted)" strokeDasharray="4 4" />
+              <Tooltip content={<MoodTrendTooltip />} />
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke="var(--chart-primary)"
+                strokeWidth={3}
+                dot={{ r: 4, fill: "var(--surface-solid)", strokeWidth: 2 }}
+                connectNulls={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
 }
 
-function groupCount<T>(items: T[], key: (item: T) => string) {
-  const map = new Map<string, number>();
-  items.forEach((item) => map.set(key(item), (map.get(key(item)) ?? 0) + 1));
-  return [...map.entries()].map(([name, total]) => ({ name, total })).sort((a, b) => b.total - a.total);
+function MoodTrendTooltip({ active, payload, label }: { active?: boolean; label?: string; payload?: Array<{ payload: { score: number | null; emotions: number } }> }) {
+  if (!active || !payload?.length) return null;
+  const item = payload[0].payload;
+  return (
+    <div className="chart-tooltip">
+      <strong>{label}</strong>
+      <span>{item.score === null ? uiText.dashboard.noDataForDay : `${formatSignedScore(item.score)} / +5 · ${item.emotions} emociones`}</span>
+      <small>{uiText.dashboard.moodTrendHint}</small>
+    </div>
+  );
 }
 
-function average(entries: MoodEntry[]) {
-  if (!entries.length) return 0;
-  return entries.reduce((sum, entry) => sum + entryScore(entry), 0) / entries.length;
-}
-
-function shortLabel(value: string) {
-  return value.length > 14 ? `${value.slice(0, 13)}…` : value;
-}
-
-function getEntryEmotions(entry: MoodEntry) {
-  return entry.emotions?.length ? entry.emotions : [{ emotion: entry.emotion, emoji: entry.emoji, intensity: null }];
-}
-
-function entryScore(entry: MoodEntry) {
-  const values = getEntryEmotions(entry).map((item) => item.intensity ?? scoreByEmotion[item.emotion] ?? 3);
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
+function formatSignedScore(score: number) {
+  return `${score > 0 ? "+" : ""}${score.toFixed(1)}`;
 }

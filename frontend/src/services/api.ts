@@ -43,8 +43,22 @@ export type ReminderSetting = {
   time: string;
 };
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
+const API_URL = getApiUrl();
 const TOKEN_KEY = "animo_token";
+
+function getApiUrl() {
+  const configuredUrl = import.meta.env.VITE_API_URL;
+
+  if (configuredUrl) {
+    return configuredUrl.replace(/\/$/, "");
+  }
+
+  if (import.meta.env.DEV) {
+    return "http://localhost:4000/api";
+  }
+
+  throw new Error("Falta configurar VITE_API_URL para el frontend de producción");
+}
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);

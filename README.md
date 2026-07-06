@@ -36,10 +36,11 @@ npm install
 
 ```bash
 cp .env.example backend/.env
-printf 'VITE_API_URL="http://localhost:4000/api"\n' > frontend/.env
 ```
 
-3. Edita `backend/.env` con tu `DATABASE_URL` de PostgreSQL, un `JWT_SECRET` largo y las variables de Supabase Storage. Para desarrollo puedes usar servicios como Supabase, Neon, Railway o Render PostgreSQL.
+El frontend ya incluye `frontend/.env.development` con la API local para Vite.
+
+3. Edita `backend/.env` con tu `DATABASE_URL` de PostgreSQL, un `JWT_SECRET` largo y, si quieres probar subida de imágenes local, las variables de Supabase Storage. Para desarrollo puedes usar servicios como Supabase, Neon, Railway o Render PostgreSQL.
 
 4. Genera Prisma y crea las tablas:
 
@@ -66,6 +67,7 @@ JWT_SECRET="replace-with-a-long-random-secret"
 JWT_EXPIRES_IN="7d"
 PORT=4000
 FRONTEND_URL="http://localhost:5173"
+CORS_ORIGINS="http://localhost:5173,https://animo-frontend.vercel.app"
 SUPABASE_URL="https://<project-ref>.supabase.co"
 SUPABASE_SERVICE_ROLE_KEY="replace-with-your-service-role-key"
 SUPABASE_STORAGE_BUCKET="profile-images"
@@ -84,6 +86,14 @@ EMAIL_FROM="Ánimo <no-reply@example.com>"
 ```
 
 `FRONTEND_URL` se usa para construir enlaces de recuperación de contraseña, por ejemplo `https://tu-dominio/reset-password?token=...`.
+
+`CORS_ORIGINS` es una lista separada por comas de frontends autorizados para llamar al backend. En desarrollo debe incluir `http://localhost:5173`; en producción debe incluir `https://animo-frontend.vercel.app`.
+
+Para el frontend:
+
+- Desarrollo local: `frontend/.env.development` usa `VITE_API_URL="http://localhost:4000/api"`.
+- Producción en Vercel: configura `VITE_API_URL` con la URL de Render, por ejemplo `https://tu-backend.onrender.com/api`.
+- No pongas variables privadas del backend en archivos del frontend.
 
 Si SMTP no está configurado, el backend mantiene los recordatorios y los correos funcionan en modo dry-run sin imprimir tokens completos.
 
