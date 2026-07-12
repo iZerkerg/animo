@@ -612,6 +612,91 @@ textarea:focus {
     linear-gradient(180deg, var(--app-gradient-start) 0%, var(--app-gradient-end) 100%);
 }
 
+.app-main {
+  min-width: 0;
+}
+
+.app-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: flex-end;
+  border-bottom: 1px solid var(--border);
+  background: var(--sidebar-bg);
+  padding: 8px 28px;
+  backdrop-filter: blur(16px);
+}
+
+.app-navbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.app-navbar-button {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--heading);
+  padding: 4px 10px;
+  font-weight: 800;
+}
+
+.app-navbar-button:hover,
+.app-navbar-button:focus-visible {
+  border-color: var(--border-strong);
+  background: var(--surface-tint);
+}
+
+.app-navbar-button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.app-navbar-button.active {
+  border-color: var(--primary-soft);
+  background: var(--surface-tint);
+  box-shadow: inset 0 -3px 0 var(--primary);
+}
+
+.profile-navbar-button .user-avatar.sm {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-width: 2px;
+  box-shadow: none;
+  font-size: 0.85rem;
+}
+
+.notification-action {
+  position: relative;
+}
+
+.notification-future {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: max-content;
+  max-width: min(260px, calc(100vw - 24px));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-solid);
+  color: var(--text);
+  padding: 8px 10px;
+  box-shadow: var(--shadow);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .sidebar {
   position: sticky;
   top: 0;
@@ -635,6 +720,10 @@ textarea:focus {
   min-width: 0;
   padding: 0 14px;
   font-weight: 800;
+}
+
+.nav-item:not(.new-mood-nav)[aria-current="page"] {
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .new-mood-nav {
@@ -1838,12 +1927,6 @@ textarea:focus {
   }
 }
 
-@media (max-width: 640px) {
-  .sidebar .achievements-nav {
-    display: none !important;
-  }
-}
-
 /* Logros */
 .achievements-page {
   display: grid;
@@ -2116,7 +2199,6 @@ textarea:focus {
 }
 
 @media (max-width: 640px) {
-  .achievements-nav { display: none !important; }
   .achievements-intro { align-items: stretch; flex-direction: column; }
   .achievements-intro .secondary-action { width: 100%; }
   .achievement-summary { grid-template-columns: 1fr; }
@@ -2174,6 +2256,34 @@ textarea:focus {
     min-height: 100dvh;
   }
 
+  .app-main {
+    padding-top: 58px;
+  }
+
+  .app-navbar {
+    position: fixed;
+    right: 0;
+    left: 0;
+    min-height: 58px;
+    padding: 6px 10px;
+  }
+
+  .app-navbar-button {
+    width: 44px;
+    min-height: 44px;
+    padding: 3px;
+  }
+
+  .app-navbar-button > span:not(.user-avatar),
+  .app-navbar-button > img + span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
   .sidebar {
     position: fixed !important;
     top: auto;
@@ -2225,6 +2335,11 @@ textarea:focus {
   .nav-item svg {
     width: 19px;
     height: 19px;
+  }
+
+
+  .nav-item:not(.new-mood-nav)[aria-current="page"] {
+    box-shadow: inset 0 -3px 0 var(--primary);
   }
 
   .new-mood-nav {
@@ -2577,11 +2692,5 @@ textarea:focus {
 
   .home-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .sidebar .achievements-nav {
-    display: none !important;
   }
 }

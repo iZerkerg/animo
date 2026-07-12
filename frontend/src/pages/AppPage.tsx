@@ -1,4 +1,4 @@
-import { Award, CalendarDays, ChartNoAxesColumnIncreasing, PenLine, Plus, UserCircle } from "lucide-react";
+import { CalendarDays, ChartNoAxesColumnIncreasing, PenLine, Plus, Trophy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarView } from "../components/CalendarView";
 import { DashboardCharts } from "../components/DashboardCharts";
@@ -10,6 +10,7 @@ import { ProfilePage } from "./ProfilePage";
 import { SettingsPage } from "./SettingsPage";
 import { AchievementsPage } from "./AchievementsPage";
 import { AchievementToast } from "../components/AchievementToast";
+import { AppNavbar } from "../components/AppNavbar";
 import { api, clearToken, type Category, type MoodEntry, type UnlockedAchievement, type User } from "../services/api";
 import { isBirthdayToday, isSameCivilDay } from "../utils/date";
 
@@ -91,34 +92,38 @@ export function AppPage({ colorTheme, user, onColorThemeChange, onLogout, onThem
 
   return (
     <main className="app-shell">
-      <aside className="sidebar">
+      <aside aria-label="Navegación principal" className="sidebar">
         <div className="brand-mark compact-brand">{uiText.brand}</div>
-        <button className={activeView === "home" ? "nav-item active" : "nav-item"} onClick={() => navigate("home")}>
+        <button aria-current={activeView === "home" ? "page" : undefined} className={activeView === "home" ? "nav-item active" : "nav-item"} onClick={() => navigate("home")}>
           <PenLine size={18} /> {uiText.nav.diary}
         </button>
-        <button className={activeView === "calendar" ? "nav-item active" : "nav-item"} onClick={() => navigate("calendar")}>
+        <button aria-current={activeView === "calendar" ? "page" : undefined} className={activeView === "calendar" ? "nav-item active" : "nav-item"} onClick={() => navigate("calendar")}>
           <CalendarDays size={18} /> {uiText.nav.calendar}
         </button>
         <button
           aria-label="Registrar estado de ánimo"
+          aria-current={activeView === "newMood" ? "page" : undefined}
           className={activeView === "newMood" ? "nav-item new-mood-nav active" : "nav-item new-mood-nav"}
           onClick={() => navigate("newMood")}
         >
           <Plus size={22} />
           <span>{uiText.nav.newMood}</span>
         </button>
-        <button className={activeView === "stats" ? "nav-item active" : "nav-item"} onClick={() => navigate("stats")}>
+        <button aria-current={activeView === "stats" ? "page" : undefined} className={activeView === "stats" ? "nav-item active" : "nav-item"} onClick={() => navigate("stats")}>
           <ChartNoAxesColumnIncreasing size={18} /> {uiText.nav.charts}
         </button>
-        <button className={activeView === "achievements" ? "nav-item achievements-nav active" : "nav-item achievements-nav"} onClick={() => navigate("achievements")}>
-          <Award size={18} /> {uiText.nav.achievements}
-        </button>
-        <button className={activeView === "profile" || activeView === "settings" ? "nav-item active" : "nav-item"} onClick={() => navigate("profile")}>
-          <UserCircle size={18} /> {uiText.nav.profile}
+        <button aria-current={activeView === "achievements" ? "page" : undefined} className={activeView === "achievements" ? "nav-item active" : "nav-item"} onClick={() => navigate("achievements")}>
+          <Trophy size={18} /> {uiText.nav.achievements}
         </button>
       </aside>
 
-      <section className="content">
+      <div className="app-main">
+        <AppNavbar
+          isProfileActive={activeView === "profile" || activeView === "settings"}
+          onOpenProfile={() => navigate("profile")}
+          user={user}
+        />
+        <section className="content">
         {activeView !== "home" && (
           <header className="topbar">
             <div>
@@ -176,7 +181,7 @@ export function AppPage({ colorTheme, user, onColorThemeChange, onLogout, onThem
         {activeView === "stats" && <DashboardCharts entries={entries} />}
         {activeView === "achievements" && <AchievementsPage />}
         {activeView === "profile" && (
-          <ProfilePage user={user} onLogout={logout} onOpenAchievements={() => navigate("achievements")} onOpenSettings={() => navigate("settings")} onUserUpdated={onUserUpdated} />
+          <ProfilePage user={user} onLogout={logout} onOpenSettings={() => navigate("settings")} onUserUpdated={onUserUpdated} />
         )}
         {activeView === "settings" && (
           <SettingsPage
@@ -187,7 +192,8 @@ export function AppPage({ colorTheme, user, onColorThemeChange, onLogout, onThem
             onThemeChange={onThemeChange}
           />
         )}
-      </section>
+        </section>
+      </div>
       <AchievementToast achievements={achievementNotifications} onClose={() => setAchievementNotifications([])} />
     </main>
   );

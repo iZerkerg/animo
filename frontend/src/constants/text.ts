@@ -65,7 +65,6 @@ export const uiText = {
     edit: "Editar perfil",
     editTitle: "Editar perfil",
     settings: "Configuración",
-    achievements: "Logros",
     cancel: "Cancelar",
     save: "Guardar cambios",
     saving: "Guardando cambios...",
