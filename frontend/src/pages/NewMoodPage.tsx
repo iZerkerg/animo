@@ -1,10 +1,10 @@
 import { MoodForm } from "../components/MoodForm";
 import { uiText } from "../constants/text";
-import type { Category } from "../services/api";
+import type { Category, UnlockedAchievement } from "../services/api";
 
 type Props = {
   categories: Category[];
-  onCreated: () => void;
+  onCreated: (unlockedAchievements: UnlockedAchievement[]) => void;
 };
 
 export function NewMoodPage({ categories, onCreated }: Props) {

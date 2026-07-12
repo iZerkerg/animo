@@ -15,7 +15,7 @@ function getStoredTheme(): ThemeMode {
 
 function getStoredColorTheme(): ColorTheme {
   const stored = localStorage.getItem(COLOR_THEME_STORAGE_KEY);
-  return stored === "red" || stored === "blue" || stored === "green" || stored === "sun" || stored === "rose" ? stored : "rose";
+  return stored === "red" || stored === "blue" || stored === "green" || stored === "sun" || stored === "rose" ? stored : "blue";
 }
 
 function resolveTheme(mode: ThemeMode): ResolvedTheme {

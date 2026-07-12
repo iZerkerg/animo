@@ -4,6 +4,8 @@ import { z } from "zod";
 import { prisma } from "../config/prisma.js";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 import { buildSummary } from "../services/summary.service.js";
+import { recalculateAchievements } from "../services/achievement.service.js";
+import { safeTimeZone } from "../utils/civil-date.js";
 
 export const moodRouter = Router();
 
@@ -68,7 +70,12 @@ moodRouter.post("/", requireAuth, async (req: AuthRequest, res) => {
     include: { categories: true, emotions: true }
   });
 
-  return res.status(201).json({ entry });
+  const unlockedAchievements = await recalculateAchievements(
+    req.user!.id,
+    safeTimeZone(typeof req.body.timeZone === "string" ? req.body.timeZone : undefined)
+  );
+
+  return res.status(201).json({ entry, unlockedAchievements });
 });
 
 moodRouter.get("/stats", requireAuth, async (req: AuthRequest, res) => {

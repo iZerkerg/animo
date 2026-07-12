@@ -7,6 +7,7 @@ export const uiText = {
     calendar: "Calendario",
     newMood: "Registrar",
     charts: "Análisis",
+    achievements: "Logros",
     profile: "Perfil",
     settings: "Configuración",
     logout: "Salir"
@@ -64,6 +65,7 @@ export const uiText = {
     edit: "Editar perfil",
     editTitle: "Editar perfil",
     settings: "Configuración",
+    achievements: "Logros",
     cancel: "Cancelar",
     save: "Guardar cambios",
     saving: "Guardando cambios...",
@@ -86,6 +88,9 @@ export const uiText = {
       green: "Verde",
       sun: "Sol"
     }
+  },
+  achievements: {
+    title: "Logros"
   },
   moodForm: {
     title: "Registro rápido",
@@ -119,13 +124,11 @@ export const uiText = {
     recordsAnalyzed: "registros analizados",
     emotionAnalyzed: "emoción analizada",
     emotionsAnalyzed: "emociones analizadas",
-    totalEmotionEvents: "Emociones registradas",
-    totalEmotionEventsHint: "Suma de emociones seleccionadas.",
-    recordsCount: "Registros analizados",
-    recordsCountHint: "Entradas guardadas en el periodo.",
-    wellbeingIndex: "Índice de bienestar",
-    wellbeingShortHint: "Basado en tipo de emoción e intensidad.",
-    wellbeingScaleHint: "0 indica días más difíciles, 100 indica días más positivos.",
+    emotionalBalance: "Balance emocional",
+    emotionalBalanceNegative: "Negativo",
+    emotionalBalanceNeutral: "Equilibrio",
+    emotionalBalancePositive: "Positivo",
+    emotionalBalanceNoData: "No hay emociones suficientes para calcular el balance en este período.",
     topEmotion: "Emoción más frecuente",
     moodTrend: "Evolución del estado de ánimo",
     moodTrendHint: "Este gráfico resume si en cada día predominaron emociones positivas o negativas, considerando la intensidad de cada emoción.",
@@ -133,7 +136,7 @@ export const uiText = {
     recentEvolution: "Evolución reciente",
     frequentEmotions: "Emociones frecuentes",
     frequencyHint: "Cada emoción seleccionada cuenta como una ocurrencia.",
-    wellbeingTooltip: "Este índice resume la tendencia general del día considerando tipo de emoción e intensidad.",
+    emotionalBalanceTooltip: "Este indicador resume el predominio de emociones positivas y negativas registradas durante el período seleccionado, considerando también la intensidad de cada emoción.",
     noFrequencyData: "No hay emociones registradas en este periodo.",
     singleDayEvolutionHint: "Para ver una tendencia, selecciona un periodo de varios días o registra más momentos del día.",
     notEnoughEvolutionData: "No hay registros suficientes para este periodo. Prueba seleccionando una temporalidad más amplia.",

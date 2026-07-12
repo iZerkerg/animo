@@ -14,6 +14,18 @@ enum TimeOfDay {
   evening
 }
 
+enum AchievementCategory {
+  consistency
+  dailyRhythm
+  records
+  emotions
+  categories
+  reflection
+  intensity
+  special
+  secret
+}
+
 model User {
   id                  String               @id @default(cuid())
   name                String
@@ -26,6 +38,36 @@ model User {
   moodEntries         MoodEntry[]
   reminderSettings    ReminderSetting[]
   passwordResetTokens PasswordResetToken[]
+  achievements        UserAchievement[]
+}
+
+model Achievement {
+  id               String              @id @default(cuid())
+  code             String              @unique
+  name             String
+  description      String
+  category         AchievementCategory
+  icon             String
+  target           Int?
+  sortOrder        Int                 @default(0)
+  isSecret         Boolean             @default(false)
+  createdAt        DateTime            @default(now())
+  userAchievements UserAchievement[]
+
+  @@index([category, sortOrder])
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId, unlockedAt])
+  @@index([achievementId])
 }
 
 model MoodEntry {

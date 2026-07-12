@@ -138,6 +138,37 @@ El flujo usa `POST /api/auth/forgot-password` y `POST /api/auth/reset-password`.
 - Resumen automático de tendencias semanales.
 - Configuración de recordatorios por correo con servicio modular en `backend/src/services/email.service.ts`.
 - Saludo especial de cumpleaños cuando coincide día y mes de la fecha guardada en el perfil.
+- Sistema de 32 logros con progreso, racha actual, mejor racha histórica, secretos y notificaciones discretas.
+
+## Logros, migración y despliegue
+
+El catálogo vive en `backend/src/constants/achievements.ts` y se sincroniza mediante `upsert` por `code`, por lo que inicializarlo varias veces es seguro. Los desbloqueos se guardan en `UserAchievement`; el progreso restante se calcula desde los registros existentes y no duplica estadísticas derivables.
+
+Después de actualizar el código en desarrollo:
+
+```bash
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:seed --workspace backend
+```
+
+`prisma:migrate` aplica la migración `20260712010000_add_achievements` sin borrar registros existentes. No uses `prisma db push --force-reset` ni resetees el proyecto de Supabase.
+
+En producción, configura `DATABASE_URL` y `DIRECT_URL` en el backend y aplica únicamente las migraciones pendientes:
+
+```bash
+npx prisma migrate deploy --schema backend/prisma/schema.prisma
+npm run prisma:seed --workspace backend
+```
+
+Para usuarios con historial previo, el endpoint autenticado siguiente recalcula solo al usuario del JWT y es idempotente:
+
+```http
+POST /api/achievements/recalculate?timeZone=America%2FSantiago
+Authorization: Bearer <token>
+```
+
+La página `/achievements` también ejecuta ese recálculo al abrirse por primera vez. El primer aniversario se basa en la fecha del primer registro del diario. Las rachas, cumpleaños y días completos usan fechas civiles en la zona horaria enviada por el navegador.
 
 ## Siguientes mejoras sugeridas
 

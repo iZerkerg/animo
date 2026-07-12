@@ -32,6 +32,64 @@ export type MoodTrendDatum = {
   emotions: number;
 };
 
+export type EmotionalBalanceCategory = {
+  key: "negative-high" | "negative-moderate" | "balanced" | "positive-moderate" | "positive-high";
+  min: number;
+  max: number;
+  includeMin: boolean;
+  includeMax: boolean;
+  label: string;
+  explanation: string;
+};
+
+export const emotionalBalanceCategories: EmotionalBalanceCategory[] = [
+  {
+    key: "negative-high",
+    min: -5,
+    max: -3,
+    includeMin: true,
+    includeMax: true,
+    label: "Predominio negativo alto",
+    explanation: "Durante este período predominaron claramente las emociones negativas, con intensidades altas."
+  },
+  {
+    key: "negative-moderate",
+    min: -3,
+    max: -1,
+    includeMin: false,
+    includeMax: false,
+    label: "Predominio negativo moderado",
+    explanation: "Durante este período predominaron emociones negativas de intensidad moderada."
+  },
+  {
+    key: "balanced",
+    min: -1,
+    max: 1,
+    includeMin: true,
+    includeMax: true,
+    label: "Balance equilibrado",
+    explanation: "Las emociones registradas muestran un equilibrio entre experiencias positivas y negativas."
+  },
+  {
+    key: "positive-moderate",
+    min: 1,
+    max: 3,
+    includeMin: false,
+    includeMax: false,
+    label: "Predominio positivo moderado",
+    explanation: "Durante este período predominaron ligeramente las emociones positivas."
+  },
+  {
+    key: "positive-high",
+    min: 3,
+    max: 5,
+    includeMin: true,
+    includeMax: true,
+    label: "Predominio positivo alto",
+    explanation: "Durante este período predominaron claramente las emociones positivas, con intensidades altas."
+  }
+];
+
 const presetDays: Record<Exclude<TimeRangePreset, "custom">, number> = {
   "1d": 1,
   "3d": 3,
@@ -185,9 +243,14 @@ export function calculateWeightedMoodScore(entries: MoodEntry[]) {
   return Math.round(score * 10) / 10;
 }
 
-export function moodScoreToWellbeingIndex(score: number | null) {
+export function getEmotionalBalanceCategory(score: number | null) {
   if (score === null) return null;
-  return Math.round(((score + 5) / 10) * 100);
+  const normalizedScore = Math.max(-5, Math.min(5, score));
+  return emotionalBalanceCategories.find((category) => {
+    const aboveMin = category.includeMin ? normalizedScore >= category.min : normalizedScore > category.min;
+    const belowMax = category.includeMax ? normalizedScore <= category.max : normalizedScore < category.max;
+    return aboveMin && belowMax;
+  }) ?? null;
 }
 
 export function formatRangeLabel(range: DateRange | null) {

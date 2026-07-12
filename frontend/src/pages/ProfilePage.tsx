@@ -1,4 +1,4 @@
-import { Camera, LogOut, Settings } from "lucide-react";
+import { Award, Camera, LogOut, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { LoadingButton } from "../components/LoadingButton";
 import { UserAvatar } from "../components/UserAvatar";
@@ -11,10 +11,11 @@ type Props = {
   user: User;
   onLogout: () => void;
   onOpenSettings: () => void;
+  onOpenAchievements: () => void;
   onUserUpdated: (user: User) => void;
 };
 
-export function ProfilePage({ onLogout, onOpenSettings, onUserUpdated, user }: Props) {
+export function ProfilePage({ onLogout, onOpenAchievements, onOpenSettings, onUserUpdated, user }: Props) {
   const [name, setName] = useState(user.name);
   const [birthDate, setBirthDate] = useState(getCivilDateInputValue(user.birthDate));
   const [profileImageUrl, setProfileImageUrl] = useState(user.profileImageUrl ?? "");
@@ -146,6 +147,9 @@ export function ProfilePage({ onLogout, onOpenSettings, onUserUpdated, user }: P
         </button>
         <button className="secondary-action logout-profile" type="button" onClick={onOpenSettings}>
           <Settings size={18} /> {uiText.profile.settings}
+        </button>
+        <button className="secondary-action logout-profile" type="button" onClick={onOpenAchievements}>
+          <Award size={18} /> {uiText.profile.achievements}
         </button>
         <button className="secondary-action logout-profile" type="button" onClick={onLogout}>
           <LogOut size={18} /> {uiText.profile.logout}

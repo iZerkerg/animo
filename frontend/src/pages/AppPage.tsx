@@ -1,4 +1,4 @@
-import { CalendarDays, ChartNoAxesColumnIncreasing, PenLine, Plus, UserCircle } from "lucide-react";
+import { Award, CalendarDays, ChartNoAxesColumnIncreasing, PenLine, Plus, UserCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarView } from "../components/CalendarView";
 import { DashboardCharts } from "../components/DashboardCharts";
@@ -8,10 +8,12 @@ import type { ColorTheme, ThemeMode } from "../hooks/useTheme";
 import { NewMoodPage } from "./NewMoodPage";
 import { ProfilePage } from "./ProfilePage";
 import { SettingsPage } from "./SettingsPage";
-import { api, clearToken, type Category, type MoodEntry, type User } from "../services/api";
+import { AchievementsPage } from "./AchievementsPage";
+import { AchievementToast } from "../components/AchievementToast";
+import { api, clearToken, type Category, type MoodEntry, type UnlockedAchievement, type User } from "../services/api";
 import { isBirthdayToday, isSameCivilDay } from "../utils/date";
 
-type AppView = "home" | "calendar" | "newMood" | "stats" | "profile" | "settings";
+type AppView = "home" | "calendar" | "newMood" | "stats" | "achievements" | "profile" | "settings";
 
 type Props = {
   colorTheme: ColorTheme;
@@ -29,6 +31,7 @@ export function AppPage({ colorTheme, user, onColorThemeChange, onLogout, onThem
   const [summary, setSummary] = useState<string[]>([]);
   const [activeView, setActiveView] = useState<AppView>(() => getViewFromPath());
   const [homeMessage, setHomeMessage] = useState("");
+  const [achievementNotifications, setAchievementNotifications] = useState<UnlockedAchievement[]>([]);
 
   async function refresh() {
     const [moodsData, categoriesData, statsData] = await Promise.all([api.moods(), api.categories(), api.stats()]);
@@ -75,11 +78,14 @@ export function AppPage({ colorTheme, user, onColorThemeChange, onLogout, onThem
           ? uiText.moodForm.title
           : activeView === "stats"
             ? uiText.dashboard.title
-            : uiText.home.title;
+            : activeView === "achievements"
+              ? uiText.achievements.title
+              : uiText.home.title;
 
-  async function handleMoodCreated() {
+  async function handleMoodCreated(unlockedAchievements: UnlockedAchievement[]) {
     await refresh();
     setHomeMessage(uiText.moodForm.saved);
+    setAchievementNotifications(unlockedAchievements);
     navigate("home");
   }
 
@@ -103,6 +109,9 @@ export function AppPage({ colorTheme, user, onColorThemeChange, onLogout, onThem
         </button>
         <button className={activeView === "stats" ? "nav-item active" : "nav-item"} onClick={() => navigate("stats")}>
           <ChartNoAxesColumnIncreasing size={18} /> {uiText.nav.charts}
+        </button>
+        <button className={activeView === "achievements" ? "nav-item achievements-nav active" : "nav-item achievements-nav"} onClick={() => navigate("achievements")}>
+          <Award size={18} /> {uiText.nav.achievements}
         </button>
         <button className={activeView === "profile" || activeView === "settings" ? "nav-item active" : "nav-item"} onClick={() => navigate("profile")}>
           <UserCircle size={18} /> {uiText.nav.profile}
@@ -165,8 +174,9 @@ export function AppPage({ colorTheme, user, onColorThemeChange, onLogout, onThem
         {activeView === "calendar" && <CalendarView entries={entries} />}
         {activeView === "newMood" && <NewMoodPage categories={categories} onCreated={handleMoodCreated} />}
         {activeView === "stats" && <DashboardCharts entries={entries} />}
+        {activeView === "achievements" && <AchievementsPage />}
         {activeView === "profile" && (
-          <ProfilePage user={user} onLogout={logout} onOpenSettings={() => navigate("settings")} onUserUpdated={onUserUpdated} />
+          <ProfilePage user={user} onLogout={logout} onOpenAchievements={() => navigate("achievements")} onOpenSettings={() => navigate("settings")} onUserUpdated={onUserUpdated} />
         )}
         {activeView === "settings" && (
           <SettingsPage
@@ -178,6 +188,7 @@ export function AppPage({ colorTheme, user, onColorThemeChange, onLogout, onThem
           />
         )}
       </section>
+      <AchievementToast achievements={achievementNotifications} onClose={() => setAchievementNotifications([])} />
     </main>
   );
 }
@@ -185,6 +196,8 @@ export function AppPage({ colorTheme, user, onColorThemeChange, onLogout, onThem
 function getViewFromPath(): AppView {
   if (window.location.pathname === "/calendar") return "calendar";
   if (window.location.pathname === "/stats") return "stats";
+  if (window.location.pathname === "/achievements") return "achievements";
+  if (window.location.pathname === "/profile") return "profile";
   if (window.location.pathname === "/settings") return "settings";
   if (window.location.pathname === "/mood/new") return "newMood";
   return "home";
@@ -193,6 +206,8 @@ function getViewFromPath(): AppView {
 function getPathForView(view: AppView) {
   if (view === "calendar") return "/calendar";
   if (view === "stats") return "/stats";
+  if (view === "achievements") return "/achievements";
+  if (view === "profile") return "/profile";
   if (view === "settings") return "/settings";
   if (view === "newMood") return "/mood/new";
   return "/";

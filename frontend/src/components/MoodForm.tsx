@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { emotions, timeOfDayLabels, uiText } from "../constants/text";
-import type { Category, MoodEntryEmotion, TimeOfDay } from "../services/api";
+import type { Category, MoodEntryEmotion, TimeOfDay, UnlockedAchievement } from "../services/api";
 import { api } from "../services/api";
 
 const timeOptions: Array<{ value: TimeOfDay; label: string }> = [
@@ -12,7 +12,7 @@ const timeOptions: Array<{ value: TimeOfDay; label: string }> = [
 
 type Props = {
   categories: Category[];
-  onCreated: () => void | Promise<void>;
+  onCreated: (unlockedAchievements: UnlockedAchievement[]) => void | Promise<void>;
 };
 
 export function MoodForm({ categories, onCreated }: Props) {
@@ -30,7 +30,7 @@ export function MoodForm({ categories, onCreated }: Props) {
     if (!selectedEmotions.length) return;
     setSaving(true);
     try {
-      await api.createMood({
+      const response = await api.createMood({
         emotions: selectedEmotions.map((item) => ({
           emotion: item.emotion,
           emoji: item.emoji,
@@ -38,13 +38,14 @@ export function MoodForm({ categories, onCreated }: Props) {
         })),
         note,
         timeOfDay,
-        date: `${date}T12:00:00.000Z`,
-        categoryIds
+        date: new Date(`${date}T12:00:00`).toISOString(),
+        categoryIds,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
       });
       setNote("");
       setCategoryIds([]);
       setSelectedEmotions([{ emotion: emotions[0].emotion, emoji: emotions[0].emoji, intensity: 3 }]);
-      await onCreated();
+      await onCreated(response.unlockedAchievements);
     } finally {
       setSaving(false);
     }

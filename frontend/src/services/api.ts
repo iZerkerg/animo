@@ -43,6 +43,35 @@ export type ReminderSetting = {
   time: string;
 };
 
+export type AchievementStatus = "locked" | "in_progress" | "unlocked";
+export type AchievementCategory = "consistency" | "dailyRhythm" | "records" | "emotions" | "categories" | "reflection" | "intensity" | "special" | "secret";
+
+export type Achievement = {
+  code: string;
+  name: string;
+  description: string;
+  category: AchievementCategory;
+  icon: string;
+  target: number | null;
+  sortOrder: number;
+  isSecret: boolean;
+  status: AchievementStatus;
+  currentProgress: number;
+  progressPercentage: number;
+  unlockedAt: string | null;
+};
+
+export type UnlockedAchievement = Pick<Achievement, "code" | "name" | "description" | "icon">;
+
+export type AchievementSummary = {
+  currentStreak: number;
+  bestStreak: number;
+  totalUnlocked: number;
+  totalAchievements: number;
+  nextStreakAchievement: { code: string; name: string; currentProgress: number; target: number } | null;
+  recentlyUnlocked: Achievement[];
+};
+
 const API_URL = getApiUrl();
 const TOKEN_KEY = "animo_token";
 
@@ -119,7 +148,8 @@ export const api = {
     timeOfDay: TimeOfDay;
     date: string;
     categoryIds: string[];
-  }) => request<{ entry: MoodEntry }>("/moods", { method: "POST", body: JSON.stringify(payload) }),
+    timeZone: string;
+  }) => request<{ entry: MoodEntry; unlockedAchievements: UnlockedAchievement[] }>("/moods", { method: "POST", body: JSON.stringify(payload) }),
   stats: () =>
     request<{
       weekEntries: MoodEntry[];
@@ -133,5 +163,12 @@ export const api = {
       method: "PUT",
       body: JSON.stringify({ settings })
     }),
-  testReminder: () => request<{ message: string }>("/reminders/test", { method: "POST" })
+  testReminder: () => request<{ message: string }>("/reminders/test", { method: "POST" }),
+  achievements: () => request<{ achievements: Achievement[] }>(`/achievements?timeZone=${encodeURIComponent(getTimeZone())}`),
+  achievementSummary: () => request<{ summary: AchievementSummary }>(`/achievements/summary?timeZone=${encodeURIComponent(getTimeZone())}`),
+  recalculateAchievements: () => request<{ message: string; unlockedAchievements: UnlockedAchievement[] }>(`/achievements/recalculate?timeZone=${encodeURIComponent(getTimeZone())}`, { method: "POST" })
 };
+
+function getTimeZone() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}

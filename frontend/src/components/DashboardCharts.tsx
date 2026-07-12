@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Info } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { uiText } from "../constants/text";
 import type { MoodEntry } from "../services/api";
@@ -9,8 +10,8 @@ import {
   filterEntriesByRange,
   formatAnalysisRangeLabel,
   getDefaultCustomRange,
+  getEmotionalBalanceCategory,
   getTimeRangeLabel,
-  moodScoreToWellbeingIndex,
   resolveDateRange,
   timeRangeOptions,
   type TimeRangePreset
@@ -34,6 +35,7 @@ export function DashboardCharts({ entries }: Props) {
   const [rangePreset, setRangePreset] = useState<TimeRangePreset>("1w");
   const [customStart, setCustomStart] = useState(defaultCustomRange.start);
   const [customEnd, setCustomEnd] = useState(defaultCustomRange.end);
+  const [isBalanceTooltipOpen, setIsBalanceTooltipOpen] = useState(false);
 
   const range = useMemo(() => resolveDateRange(rangePreset, customStart, customEnd), [customEnd, customStart, rangePreset]);
   const rangeError = rangePreset === "custom" && !range ? uiText.dashboard.invalidRange : "";
@@ -49,7 +51,9 @@ export function DashboardCharts({ entries }: Props) {
   const averageMoodScore = moodTrend
     .filter((item) => item.score !== null)
     .reduce((sum, item, _, source) => sum + (item.score ?? 0) / source.length, 0);
-  const wellbeingIndex = moodScoreToWellbeingIndex(trendPointsWithData ? averageMoodScore : null);
+  const emotionalBalanceScore = trendPointsWithData ? averageMoodScore : null;
+  const emotionalBalanceCategory = getEmotionalBalanceCategory(emotionalBalanceScore);
+  const emotionalBalancePosition = emotionalBalanceScore === null ? 50 : ((Math.max(-5, Math.min(5, emotionalBalanceScore)) + 5) / 10) * 100;
 
   return (
     <div className="dashboard-grid">
@@ -85,31 +89,69 @@ export function DashboardCharts({ entries }: Props) {
         )}
         {rangeError && <p className="error-text">{rangeError}</p>}
         <div className="analysis-period-facts">
-          <span>{formatAnalysisRangeLabel(range)}</span>
-          <span>{filteredEntries.length} {filteredEntries.length === 1 ? uiText.dashboard.recordAnalyzed : uiText.dashboard.recordsAnalyzed}</span>
-          <span>{emotionEvents.length} {emotionEvents.length === 1 ? uiText.dashboard.emotionAnalyzed : uiText.dashboard.emotionsAnalyzed}</span>
+          <strong>{formatAnalysisRangeLabel(range)}</strong>
+          <div className="analysis-period-counts">
+            <span>{filteredEntries.length} {filteredEntries.length === 1 ? uiText.dashboard.recordAnalyzed : uiText.dashboard.recordsAnalyzed}</span>
+            <span>{emotionEvents.length} {emotionEvents.length === 1 ? uiText.dashboard.emotionAnalyzed : uiText.dashboard.emotionsAnalyzed}</span>
+          </div>
         </div>
       </div>
 
-      <div className="panel metric-card">
-        <span>{uiText.dashboard.totalEmotionEvents}</span>
-        <strong>{emotionEvents.length}</strong>
-        <small>{uiText.dashboard.totalEmotionEventsHint}</small>
-      </div>
-      <div className="panel metric-card">
-        <span>{uiText.dashboard.recordsCount}</span>
-        <strong>{filteredEntries.length}</strong>
-        <small>{uiText.dashboard.recordsCountHint}</small>
-      </div>
-      <div className="panel metric-card">
-        <span>{uiText.dashboard.wellbeingIndex}</span>
-        <strong>{wellbeingIndex !== null ? `${wellbeingIndex}/100` : "-"}</strong>
-        <small>{uiText.dashboard.wellbeingShortHint}</small>
-      </div>
-      <div className="panel metric-card">
-        <span>{uiText.dashboard.topEmotion}</span>
-        <strong>{topEmotion ? `${topEmotion.emoji} ${topEmotion.name}` : "-"}</strong>
-        <small>{topEmotion ? topEmotion.label : uiText.dashboard.noFrequencyData}</small>
+      <div className="analysis-summary-grid wide">
+        <div className="panel metric-card">
+          <span>{uiText.dashboard.topEmotion}</span>
+          <strong>{topEmotion ? `${topEmotion.emoji} ${topEmotion.name}` : "-"}</strong>
+          <small>{topEmotion ? topEmotion.label : uiText.dashboard.noFrequencyData}</small>
+        </div>
+        <div className="panel metric-card emotional-balance-card">
+          <div className="emotional-balance-heading">
+            <span>{uiText.dashboard.emotionalBalance}</span>
+            <button
+              aria-describedby="emotional-balance-tooltip"
+              aria-expanded={isBalanceTooltipOpen}
+              aria-label={`Información sobre ${uiText.dashboard.emotionalBalance}`}
+              className="balance-info"
+              type="button"
+              onBlur={() => setIsBalanceTooltipOpen(false)}
+              onClick={() => setIsBalanceTooltipOpen((open) => !open)}
+            >
+              <Info aria-hidden="true" size={16} />
+              <span
+                className={isBalanceTooltipOpen ? "balance-tooltip is-open" : "balance-tooltip"}
+                id="emotional-balance-tooltip"
+                role="tooltip"
+              >
+                {uiText.dashboard.emotionalBalanceTooltip}
+              </span>
+            </button>
+          </div>
+
+          <div className="emotional-balance-result">
+            <strong>{emotionalBalanceScore === null ? "-" : formatSignedScore(emotionalBalanceScore)}</strong>
+            <span>{emotionalBalanceCategory?.label ?? uiText.dashboard.emotionalBalanceNoData}</span>
+          </div>
+
+          <div className="emotional-balance-scale" aria-label={emotionalBalanceScore === null ? uiText.dashboard.emotionalBalanceNoData : `${uiText.dashboard.emotionalBalance}: ${formatSignedScore(emotionalBalanceScore)} de -5 a +5`}>
+            <div className="balance-scale-labels" aria-hidden="true">
+              <span>{uiText.dashboard.emotionalBalanceNegative}</span>
+              <span>{uiText.dashboard.emotionalBalanceNeutral}</span>
+              <span>{uiText.dashboard.emotionalBalancePositive}</span>
+            </div>
+            <div className="balance-track" aria-hidden="true">
+              <span className="balance-center" />
+              {emotionalBalanceScore !== null && <span className="balance-marker" style={{ left: `${emotionalBalancePosition}%` }} />}
+            </div>
+            <div className="balance-scale-values" aria-hidden="true">
+              <span>-5</span>
+              <span>0</span>
+              <span>+5</span>
+            </div>
+          </div>
+
+          <p className="emotional-balance-explanation">
+            {emotionalBalanceCategory?.explanation ?? uiText.dashboard.emotionalBalanceNoData}
+          </p>
+        </div>
       </div>
 
       <div className="panel chart-card wide">
