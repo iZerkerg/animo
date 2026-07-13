@@ -39,6 +39,16 @@ export function formatInstantDateLong(value: string) {
   return new Date(value).toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" });
 }
 
+export function formatLocalTime24(value: string | Date) {
+  const date = value instanceof Date ? value : new Date(value);
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+export function getLocalTimeOfDayInMinutes(value: string | Date) {
+  const date = value instanceof Date ? value : new Date(value);
+  return (date.getHours() * 60) + date.getMinutes();
+}
+
 export function isSameCivilDay(value: string, date: Date) {
   const candidate = new Date(value);
   return (

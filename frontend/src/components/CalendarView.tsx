@@ -1,11 +1,12 @@
 import { addMonths, eachDayOfInterval, endOfMonth, format, getDay, startOfMonth, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { timeOfDayLabels, uiText } from "../constants/text";
 import type { MoodEntry } from "../services/api";
-import { formatDateObjectShort, isSameCivilDay } from "../utils/date";
+import { formatDateObjectShort, formatLocalTime24, getLocalTimeOfDayInMinutes, isSameCivilDay } from "../utils/date";
 import { getDominantEmotion, getEntryEmotions } from "../utils/emotions";
+import { EntryActionsMenu, type EntryAction } from "./EntryActionsMenu";
 
 type Props = {
   entries: MoodEntry[];
@@ -14,6 +15,13 @@ type Props = {
 export function CalendarView({ entries }: Props) {
   const [month, setMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [openMenuEntryId, setOpenMenuEntryId] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState("");
+  const noticeTimerRef = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (noticeTimerRef.current !== null) window.clearTimeout(noticeTimerRef.current);
+  }, []);
 
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(month);
@@ -37,12 +45,23 @@ export function CalendarView({ entries }: Props) {
     () =>
       entries
         .filter((entry) => isSameCivilDay(entry.date, selectedDate))
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+        .sort(compareEntriesByLocalTime),
     [entries, selectedDate]
   );
 
   function getDayEntries(day: Date) {
     return entriesByDay.get(format(day, "yyyy-MM-dd")) ?? [];
+  }
+
+  function selectDay(day: Date) {
+    setOpenMenuEntryId(null);
+    setSelectedDate(day);
+  }
+
+  function handleUnavailableAction(action: EntryAction, _entry: MoodEntry) {
+    setActionNotice(action === "edit" ? "Edición disponible próximamente." : "Eliminación disponible próximamente.");
+    if (noticeTimerRef.current !== null) window.clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = window.setTimeout(() => setActionNotice(""), 3000);
   }
 
   return (
@@ -86,7 +105,7 @@ export function CalendarView({ entries }: Props) {
               className={className}
               key={day.toISOString()}
               type="button"
-              onClick={() => setSelectedDate(day)}
+              onClick={() => selectDay(day)}
             >
               <span>{format(day, "d")}</span>
               {dominant && (
@@ -102,6 +121,7 @@ export function CalendarView({ entries }: Props) {
 
       <div className="day-detail">
         <h3>{formatDateObjectShort(selectedDate)}</h3>
+        {actionNotice && <p className="entry-action-notice" role="status">{actionNotice}</p>}
         {selectedEntries.length === 0 ? (
           <p className="empty-state">{uiText.calendar.noEntries}</p>
         ) : (
@@ -109,8 +129,16 @@ export function CalendarView({ entries }: Props) {
             <article key={entry.id}>
               <div className="entry-detail-header">
                 <strong>{timeOfDayLabels[entry.timeOfDay]}</strong>
-                <span>{format(new Date(entry.createdAt), "HH:mm")}</span>
+                <span aria-hidden="true">·</span>
+                <time dateTime={entry.createdAt}>{formatLocalTime24(entry.createdAt)}</time>
               </div>
+              <EntryActionsMenu
+                entry={entry}
+                isOpen={openMenuEntryId === entry.id}
+                onClose={() => setOpenMenuEntryId(null)}
+                onOpen={() => setOpenMenuEntryId(entry.id)}
+                onSelect={handleUnavailableAction}
+              />
               <div className="emotion-pills">
                 {getEntryEmotions(entry).map((item) => (
                   <span className="emotion-pill" key={`${entry.id}-${item.emotion}`}>
@@ -131,4 +159,12 @@ export function CalendarView({ entries }: Props) {
       </div>
     </div>
   );
+}
+
+function compareEntriesByLocalTime(a: MoodEntry, b: MoodEntry) {
+  // MoodEntry has no separate clock-time field. The visible local time comes from createdAt.
+  // Entries sharing the same displayed HH:mm are ordered by the complete creation instant.
+  const minuteDifference = getLocalTimeOfDayInMinutes(a.createdAt) - getLocalTimeOfDayInMinutes(b.createdAt);
+  if (minuteDifference !== 0) return minuteDifference;
+  return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
 }
