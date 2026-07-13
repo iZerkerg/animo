@@ -1,11 +1,17 @@
-import type { Achievement, MoodEntry, MoodEntryEmotion, Category, UserAchievement } from "@prisma/client";
+import { Prisma, type Achievement, type MoodEntry, type MoodEntryEmotion, type Category, type UserAchievement } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 import { achievementCatalog } from "../constants/achievements.js";
 import { prisma } from "../config/prisma.js";
 import { daysBetween, toCivilDateKey } from "../utils/civil-date.js";
 import { calculateStreaks } from "./streak.service.js";
+import { withDevTiming } from "../utils/dev-timing.js";
 
-type EntryWithRelations = MoodEntry & { emotions: MoodEntryEmotion[]; categories: Category[] };
-type UserUnlock = UserAchievement & { achievement: Achievement };
+type EntryWithRelations = Pick<MoodEntry, "date" | "timeOfDay" | "emotion" | "note"> & {
+  emotions: Pick<MoodEntryEmotion, "emotion" | "intensity">[];
+  categories: Pick<Category, "id">[];
+};
+type CatalogAchievement = Pick<Achievement, "id" | "code" | "name" | "description" | "category" | "icon" | "target" | "sortOrder" | "isSecret">;
+type UserUnlock = Pick<UserAchievement, "unlockedAt"> & { achievement: Pick<Achievement, "code"> };
 
 export type AchievementView = {
   code: string;
@@ -32,19 +38,27 @@ const availableEmotions = new Set(["feliz", "tranquilo", "ansioso", "triste", "e
 let catalogInitialization: Promise<unknown> | null = null;
 
 export async function ensureAchievementCatalog() {
-  catalogInitialization ??= Promise.all(achievementCatalog.map((definition) => prisma.achievement.upsert({
-    where: { code: definition.code },
-    create: { ...definition, isSecret: definition.isSecret ?? false },
-    update: {
-      name: definition.name,
-      description: definition.description,
-      category: definition.category,
-      icon: definition.icon,
-      target: definition.target,
-      sortOrder: definition.sortOrder,
-      isSecret: definition.isSecret ?? false
-    }
-  }))).catch((error) => {
+  catalogInitialization ??= withDevTiming("ensureAchievementCatalog", async () => {
+    const rows = achievementCatalog.map((definition) => Prisma.sql`(
+      ${randomUUID()}, ${definition.code}, ${definition.name}, ${definition.description},
+      ${definition.category}::"AchievementCategory", ${definition.icon}, ${definition.target},
+      ${definition.sortOrder}, ${definition.isSecret ?? false}, NOW()
+    )`);
+
+    await prisma.$executeRaw(Prisma.sql`
+      INSERT INTO "Achievement"
+        ("id", "code", "name", "description", "category", "icon", "target", "sortOrder", "isSecret", "createdAt")
+      VALUES ${Prisma.join(rows)}
+      ON CONFLICT ("code") DO UPDATE SET
+        "name" = EXCLUDED."name",
+        "description" = EXCLUDED."description",
+        "category" = EXCLUDED."category",
+        "icon" = EXCLUDED."icon",
+        "target" = EXCLUDED."target",
+        "sortOrder" = EXCLUDED."sortOrder",
+        "isSecret" = EXCLUDED."isSecret"
+    `);
+  }).catch((error) => {
     catalogInitialization = null;
     throw error;
   });
@@ -57,32 +71,43 @@ export async function recalculateAchievements(userId: string, timeZone = "UTC") 
   if (!snapshot.user) throw new Error("Usuario no encontrado");
   const computed = computeAchievementViews(snapshot.achievements, snapshot.unlocks, snapshot.entries, snapshot.user.birthDate, snapshot.categoryCount, timeZone);
   const unlockedCodes = new Set(snapshot.unlocks.map((unlock) => unlock.achievement.code));
-  const candidates = computed.filter((item) => item.status === "unlocked" && !unlockedCodes.has(item.code));
-  if (candidates.length) {
-    const idsByCode = new Map(snapshot.achievements.map((achievement) => [achievement.code, achievement.id]));
-    await prisma.userAchievement.createMany({
-      data: candidates.map((item) => ({ userId, achievementId: idsByCode.get(item.code)! })),
-      skipDuplicates: true
-    });
-  }
+  const candidates = await persistNewUnlocks(userId, snapshot.achievements, computed, unlockedCodes);
   return candidates.map(({ code, name, description, icon }) => ({ code, name, description, icon }));
 }
 
 export async function getAchievements(userId: string, timeZone = "UTC") {
-  await recalculateAchievements(userId, timeZone);
-  const snapshot = await loadSnapshot(userId);
-  if (!snapshot.user) throw new Error("Usuario no encontrado");
-  return computeAchievementViews(snapshot.achievements, snapshot.unlocks, snapshot.entries, snapshot.user.birthDate, snapshot.categoryCount, timeZone)
-    .map(hideLockedSecret)
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+  return (await getAchievementDashboard(userId, timeZone)).achievements;
 }
 
 export async function getAchievementSummary(userId: string, timeZone = "UTC") {
+  return (await getAchievementDashboard(userId, timeZone)).summary;
+}
+
+export async function getAchievementDashboard(userId: string, timeZone = "UTC") {
   await ensureAchievementCatalog();
   const snapshot = await loadSnapshot(userId);
   if (!snapshot.user) throw new Error("Usuario no encontrado");
-  const achievements = computeAchievementViews(snapshot.achievements, snapshot.unlocks, snapshot.entries, snapshot.user.birthDate, snapshot.categoryCount, timeZone).map(hideLockedSecret);
-  const { currentStreak, bestStreak } = calculateStreaks(snapshot.entries.map((entry) => entry.date), new Date(), timeZone);
+
+  const achievements = computeAchievementViews(
+    snapshot.achievements,
+    snapshot.unlocks,
+    snapshot.entries,
+    snapshot.user.birthDate,
+    snapshot.categoryCount,
+    timeZone
+  ).map(hideLockedSecret).sort((a, b) => a.sortOrder - b.sortOrder);
+
+  // Existing users created before achievements were introduced have entries but no unlock rows.
+  // Backfill them once; normal reads remain read-only after the first successful backfill.
+  if (snapshot.entries.length > 0 && snapshot.unlocks.length === 0) {
+    await persistNewUnlocks(userId, snapshot.achievements, achievements, new Set());
+  }
+
+  return { achievements, summary: buildAchievementSummary(achievements, snapshot.entries, timeZone) };
+}
+
+function buildAchievementSummary(achievements: AchievementView[], entries: EntryWithRelations[], timeZone: string) {
+  const { currentStreak, bestStreak } = calculateStreaks(entries.map((entry) => entry.date), new Date(), timeZone);
   const streakAchievements = achievements.filter((item) => item.code.startsWith("STREAK_") && item.status !== "unlocked" && item.target);
   const next = streakAchievements.find((item) => item.target! > currentStreak) ?? null;
   const recentlyUnlocked = achievements
@@ -102,16 +127,47 @@ export async function getAchievementSummary(userId: string, timeZone = "UTC") {
 async function loadSnapshot(userId: string) {
   const [user, entries, achievements, unlocks, categoryCount] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, select: { birthDate: true } }),
-    prisma.moodEntry.findMany({ where: { userId }, include: { emotions: true, categories: true }, orderBy: { date: "asc" } }),
-    prisma.achievement.findMany({ orderBy: [{ category: "asc" }, { sortOrder: "asc" }] }),
-    prisma.userAchievement.findMany({ where: { userId }, include: { achievement: true } }),
+    prisma.moodEntry.findMany({
+      where: { userId },
+      select: {
+        date: true, timeOfDay: true, emotion: true, note: true,
+        emotions: { select: { emotion: true, intensity: true } },
+        categories: { select: { id: true } }
+      },
+      orderBy: { date: "asc" }
+    }),
+    prisma.achievement.findMany({
+      select: { id: true, code: true, name: true, description: true, category: true, icon: true, target: true, sortOrder: true, isSecret: true },
+      orderBy: [{ category: "asc" }, { sortOrder: "asc" }]
+    }),
+    prisma.userAchievement.findMany({
+      where: { userId },
+      select: { unlockedAt: true, achievement: { select: { code: true } } }
+    }),
     prisma.category.count()
   ]);
   return { user, entries, achievements, unlocks, categoryCount };
 }
 
+async function persistNewUnlocks(
+  userId: string,
+  achievements: CatalogAchievement[],
+  computed: AchievementView[],
+  unlockedCodes: Set<string>
+) {
+  const candidates = computed.filter((item) => item.status === "unlocked" && !unlockedCodes.has(item.code));
+  if (!candidates.length) return candidates;
+
+  const idsByCode = new Map(achievements.map((achievement) => [achievement.code, achievement.id]));
+  await prisma.userAchievement.createMany({
+    data: candidates.map((item) => ({ userId, achievementId: idsByCode.get(item.code)! })),
+    skipDuplicates: true
+  });
+  return candidates;
+}
+
 export function computeAchievementViews(
-  achievements: Achievement[], unlocks: UserUnlock[], entries: EntryWithRelations[], birthDate: Date | null,
+  achievements: CatalogAchievement[], unlocks: UserUnlock[], entries: EntryWithRelations[], birthDate: Date | null,
   categoryCount: number, timeZone = "UTC", now = new Date()
 ): AchievementView[] {
   const unlockByCode = new Map(unlocks.map((unlock) => [unlock.achievement.code, unlock]));

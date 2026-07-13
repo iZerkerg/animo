@@ -15,35 +15,43 @@ export function AchievementsPage() {
   const [recalculating, setRecalculating] = useState(false);
   const [error, setError] = useState("");
 
-  async function load() {
+  async function load({ recalculate = false, signal }: { recalculate?: boolean; signal?: AbortSignal } = {}) {
     setError("");
     setRecalculating(true);
     try {
-      const [listResponse, summaryResponse] = await Promise.all([api.achievements(), api.achievementSummary()]);
-      setAchievements(listResponse.achievements);
-      setSummary(summaryResponse.summary);
+      if (recalculate) await api.recalculateAchievements();
+      const dashboard = await api.achievementDashboard({ signal, force: recalculate });
+      setAchievements(dashboard.achievements);
+      setSummary(dashboard.summary);
     } catch (err) {
+      if ((err as Error).name === "AbortError") return;
       setError((err as Error).message);
     } finally {
-      setLoading(false);
-      setRecalculating(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+        setRecalculating(false);
+      }
     }
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    void load({ signal: controller.signal });
+    return () => controller.abort();
+  }, []);
 
   const grouped = useMemo(() => categoryOrder.map((category) => ({
     category,
     items: achievements.filter((item) => item.category === category).sort(compareAchievements)
   })).filter((group) => group.items.length), [achievements]);
 
-  if (loading) return <div className="panel achievements-loading">Preparando tu progreso…</div>;
+  if (loading) return <AchievementsLoading />;
 
   return (
     <div className="achievements-page">
       <div className="achievements-intro">
         <div><p>Tu camino, a tu ritmo</p><h2>Pequeños hitos de autoconocimiento</h2></div>
-        <button className="secondary-action compact" disabled={recalculating} onClick={() => void load()} type="button">
+        <button className="secondary-action compact" disabled={recalculating} onClick={() => void load({ recalculate: true })} type="button">
           <RotateCcw size={17} className={recalculating ? "spin-icon" : ""} /> {recalculating ? "Actualizando…" : "Actualizar progreso"}
         </button>
       </div>
@@ -60,6 +68,21 @@ export function AchievementsPage() {
       </div>
     </div>
   );
+}
+
+function AchievementsLoading() {
+  return <div className="achievements-loading" role="status" aria-live="polite">
+    <div className="panel achievements-loading-message">
+      <span className="loading-spinner" aria-hidden="true" />
+      <div><strong>Estamos preparando tus logros.</strong><p>Esto puede tardar unos segundos.</p></div>
+    </div>
+    <div className="achievement-summary achievements-skeleton" aria-hidden="true">
+      {Array.from({ length: 4 }, (_, index) => <div className="panel achievement-skeleton-card" key={index} />)}
+    </div>
+    <div className="achievement-grid achievements-skeleton" aria-hidden="true">
+      {Array.from({ length: 6 }, (_, index) => <div className="panel achievement-skeleton-card tall" key={index} />)}
+    </div>
+  </div>;
 }
 
 function Summary({ summary }: { summary: AchievementSummary }) {

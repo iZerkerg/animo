@@ -72,8 +72,20 @@ export type AchievementSummary = {
   recentlyUnlocked: Achievement[];
 };
 
+export type AchievementDashboard = {
+  achievements: Achievement[];
+  summary: AchievementSummary;
+};
+
 const API_URL = getApiUrl();
 const TOKEN_KEY = "animo_token";
+let achievementDashboardCache: AchievementDashboard | null = null;
+let achievementDashboardRequest: {
+  controller: AbortController;
+  promise: Promise<AchievementDashboard>;
+  consumers: number;
+  abortTimer?: number;
+} | null = null;
 
 function getApiUrl() {
   const configuredUrl = import.meta.env.VITE_API_URL;
@@ -95,10 +107,12 @@ export function getToken() {
 
 export function setToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
+  invalidateAchievementDashboard();
 }
 
 export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
+  invalidateAchievementDashboard();
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -133,8 +147,11 @@ export const api = {
     request<{ message: string }>("/auth/reset-password", { method: "POST", body: JSON.stringify(payload) }),
   me: () => request<{ user: User }>("/auth/me"),
   userProfile: () => request<{ user: User }>("/users/me"),
-  updateProfile: (payload: { name?: string; birthDate?: string | null }) =>
-    request<{ user: User }>("/users/me", { method: "PATCH", body: JSON.stringify(payload) }),
+  updateProfile: async (payload: { name?: string; birthDate?: string | null }) => {
+    const response = await request<{ user: User }>("/users/me", { method: "PATCH", body: JSON.stringify(payload) });
+    invalidateAchievementDashboard();
+    return response;
+  },
   uploadProfileImage: (file: File) => {
     const formData = new FormData();
     formData.append("profileImage", file);
@@ -142,14 +159,18 @@ export const api = {
   },
   categories: () => request<{ categories: Category[] }>("/categories"),
   moods: () => request<{ entries: MoodEntry[] }>("/moods"),
-  createMood: (payload: {
+  createMood: async (payload: {
     emotions: Array<{ emotion: string; emoji: string; intensity?: number }>;
     note: string;
     timeOfDay: TimeOfDay;
     date: string;
     categoryIds: string[];
     timeZone: string;
-  }) => request<{ entry: MoodEntry; unlockedAchievements: UnlockedAchievement[] }>("/moods", { method: "POST", body: JSON.stringify(payload) }),
+  }) => {
+    const response = await request<{ entry: MoodEntry; unlockedAchievements: UnlockedAchievement[] }>("/moods", { method: "POST", body: JSON.stringify(payload) });
+    invalidateAchievementDashboard();
+    return response;
+  },
   stats: () =>
     request<{
       weekEntries: MoodEntry[];
@@ -166,8 +187,85 @@ export const api = {
   testReminder: () => request<{ message: string }>("/reminders/test", { method: "POST" }),
   achievements: () => request<{ achievements: Achievement[] }>(`/achievements?timeZone=${encodeURIComponent(getTimeZone())}`),
   achievementSummary: () => request<{ summary: AchievementSummary }>(`/achievements/summary?timeZone=${encodeURIComponent(getTimeZone())}`),
-  recalculateAchievements: () => request<{ message: string; unlockedAchievements: UnlockedAchievement[] }>(`/achievements/recalculate?timeZone=${encodeURIComponent(getTimeZone())}`, { method: "POST" })
+  achievementDashboard: (options: { signal?: AbortSignal; force?: boolean } = {}) => getAchievementDashboard(options),
+  recalculateAchievements: async () => {
+    const response = await request<{ message: string; unlockedAchievements: UnlockedAchievement[] }>(`/achievements/recalculate?timeZone=${encodeURIComponent(getTimeZone())}`, { method: "POST" });
+    invalidateAchievementDashboard();
+    return response;
+  }
 };
+
+export function invalidateAchievementDashboard() {
+  achievementDashboardCache = null;
+}
+
+function getAchievementDashboard({ signal, force = false }: { signal?: AbortSignal; force?: boolean }) {
+  if (force) {
+    achievementDashboardCache = null;
+    achievementDashboardRequest?.controller.abort();
+    achievementDashboardRequest = null;
+  }
+  if (achievementDashboardCache) return Promise.resolve(achievementDashboardCache);
+
+  if (!achievementDashboardRequest) {
+    const controller = new AbortController();
+    const flight = {
+      controller,
+      consumers: 0,
+      promise: request<AchievementDashboard>(`/achievements/dashboard?timeZone=${encodeURIComponent(getTimeZone())}`, { signal: controller.signal })
+    };
+    flight.promise = flight.promise.then((dashboard) => {
+      achievementDashboardCache = dashboard;
+      return dashboard;
+    }).finally(() => {
+      if (achievementDashboardRequest === flight) achievementDashboardRequest = null;
+    });
+    achievementDashboardRequest = flight;
+  }
+
+  return subscribeToDashboardRequest(achievementDashboardRequest, signal);
+}
+
+function subscribeToDashboardRequest(
+  flight: NonNullable<typeof achievementDashboardRequest>,
+  signal?: AbortSignal
+): Promise<AchievementDashboard> {
+  flight.consumers += 1;
+  if (flight.abortTimer) {
+    window.clearTimeout(flight.abortTimer);
+    flight.abortTimer = undefined;
+  }
+
+  return new Promise((resolve, reject) => {
+    let finished = false;
+    const release = () => {
+      flight.consumers -= 1;
+      if (flight.consumers === 0 && achievementDashboardRequest === flight) {
+        flight.abortTimer = window.setTimeout(() => {
+          if (flight.consumers === 0 && achievementDashboardRequest === flight) flight.controller.abort();
+        }, 25);
+      }
+    };
+    const finish = (callback: () => void) => {
+      if (finished) return;
+      finished = true;
+      signal?.removeEventListener("abort", onAbort);
+      release();
+      callback();
+    };
+    const onAbort = () => finish(() => reject(new DOMException("Petición cancelada", "AbortError")));
+
+    if (signal?.aborted) {
+      onAbort();
+      return;
+    }
+    signal?.addEventListener("abort", onAbort, { once: true });
+    flight.promise.then(
+      (dashboard) => finish(() => resolve(dashboard)),
+      (error) => finish(() => reject(error))
+    );
+  });
+}
 
 function getTimeZone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";

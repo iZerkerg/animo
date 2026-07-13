@@ -83,21 +83,15 @@ moodRouter.get("/stats", requireAuth, async (req: AuthRequest, res) => {
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const monthStart = startOfMonth(now);
 
-  const [weekEntries, monthEntries, allEntries] = await Promise.all([
-    prisma.moodEntry.findMany({
-      where: { userId: req.user!.id, date: { gte: weekStart, lte: endOfWeek(now, { weekStartsOn: 1 }) } },
-      include: { categories: true, emotions: true }
-    }),
-    prisma.moodEntry.findMany({
-      where: { userId: req.user!.id, date: { gte: monthStart, lte: endOfMonth(now) } },
-      include: { categories: true, emotions: true }
-    }),
-    prisma.moodEntry.findMany({
-      where: { userId: req.user!.id },
-      include: { categories: true, emotions: true },
-      orderBy: { date: "asc" }
-    })
-  ]);
+  const allEntries = await prisma.moodEntry.findMany({
+    where: { userId: req.user!.id },
+    include: { categories: true, emotions: true },
+    orderBy: { date: "asc" }
+  });
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+  const monthEnd = endOfMonth(now);
+  const weekEntries = allEntries.filter((entry) => entry.date >= weekStart && entry.date <= weekEnd);
+  const monthEntries = allEntries.filter((entry) => entry.date >= monthStart && entry.date <= monthEnd);
 
   return res.json({
     weekEntries,

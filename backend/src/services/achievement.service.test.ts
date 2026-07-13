@@ -70,3 +70,25 @@ test("un desbloqueo persistido no se duplica en el estado calculado", () => {
   assert.equal(result.filter((item) => item.code === "FIRST_ENTRY").length, 1);
   assert.equal(result.find((item) => item.code === "FIRST_ENTRY")?.progressPercentage, 100);
 });
+
+test("un usuario nuevo comienza sin logros desbloqueados", () => {
+  const result = byCode([]);
+  assert.equal([...result.values()].filter((item) => item.status === "unlocked").length, 0);
+  assert.equal(result.get("FIRST_ENTRY")?.status, "locked");
+});
+
+test("calcula un historial de 500 registros sin alterar el resultado al repetirlo", () => {
+  const entries = Array.from({ length: 500 }, (_, index) => entry(
+    new Date(Date.UTC(2025, 0, 1 + index)).toISOString().slice(0, 10),
+    { note: index < 50 ? "reflexión" : "" }
+  ));
+  const first = byCode(entries, null, 10, new Date("2026-07-12T12:00:00Z"));
+  const second = byCode(entries, null, 10, new Date("2026-07-12T12:00:00Z"));
+
+  assert.equal(first.get("ENTRIES_500")?.status, "unlocked");
+  assert.equal(first.get("NOTES_50")?.status, "unlocked");
+  assert.deepEqual(
+    [...first].map(([code, item]) => [code, item.status, item.currentProgress]),
+    [...second].map(([code, item]) => [code, item.status, item.currentProgress])
+  );
+});

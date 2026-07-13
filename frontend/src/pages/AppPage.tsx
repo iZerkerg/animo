@@ -35,8 +35,8 @@ export function AppPage({ colorTheme, user, onColorThemeChange, onLogout, onThem
   const [achievementNotifications, setAchievementNotifications] = useState<UnlockedAchievement[]>([]);
 
   async function refresh() {
-    const [moodsData, categoriesData, statsData] = await Promise.all([api.moods(), api.categories(), api.stats()]);
-    setEntries(moodsData.entries);
+    const [categoriesData, statsData] = await Promise.all([api.categories(), api.stats()]);
+    setEntries([...statsData.allEntries].reverse());
     setCategories(categoriesData.categories);
     setSummary(statsData.summary);
   }
